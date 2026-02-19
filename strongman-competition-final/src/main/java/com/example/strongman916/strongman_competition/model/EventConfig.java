@@ -17,4 +17,8 @@ public class EventConfig {
     public boolean isHigherIsBetter() { return higherIsBetter; }
     public boolean isUsesTime() { return usesTime; }
     public boolean isTimeIsTieBreaker() { return timeIsTieBreaker; }
+    public String getName() { 
+        return eventName; 
+    }
+
 }
