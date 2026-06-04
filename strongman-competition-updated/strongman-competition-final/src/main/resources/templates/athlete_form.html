@@ -29,23 +29,33 @@
         button:hover {
             background-color: #005f99;
         }
+        a {
+            color: #66b7ff;
+            margin-right: 16px;
+        }
     </style>
 </head>
 <body>
-    <h1>Add Athlete</h1>
-    <form th:action="@{/athletes}" th:object="${athlete}" method="post">
+    <h1 th:text="${formTitle}">Add Athlete</h1>
+    <nav>
+        <a th:href="@{/}">Public Results</a>
+        <a th:href="@{/organizer}">Organizer Results</a>
+        <a th:href="@{/events}">Setup Events</a>
+        <a th:href="@{/athletes}">Athletes</a>
+    </nav>
+
+    <form th:action="${formAction}" th:object="${athlete}" method="post">
         <label for="name">Name:</label>
         <input type="text" id="name" th:field="*{name}" required />
 
-        <label for="bodyweight">Body Weight:</label>
+        <label for="membership">Membership:</label>
+        <input type="text" id="membership" th:field="*{membership}" />
+
+        <label for="bodyweight">Body Weight (kg):</label>
         <input type="number" step="0.1" id="bodyweight" th:field="*{bodyweight}" required />
 
         <label for="division">Division:</label>
-        <select id="division" th:field="*{division}" required>
-            <option value="">Select Division</option>
-            <option th:each="d : ${T(com.example.strongman916.strongman_competition.model.Division).values()}"
-                    th:value="${d}" th:text="${d.label}">Division</option>
-        </select>
+        <input type="text" id="division" th:field="*{division}" placeholder="Women u73, Men Open, Masters, etc." required />
 
         <button type="submit">Save Athlete</button>
     </form>

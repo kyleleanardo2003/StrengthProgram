@@ -14,7 +14,9 @@ public class Competitor {
 
     private Map<String, Double> scores = new HashMap<>();
     private Map<String, Double> eventPoints = new HashMap<>();
+    private Map<String, Integer> eventPlacements = new HashMap<>();
     private Map<String, Double> times = new HashMap<>();
+    private Map<String, String> displayResults = new HashMap<>();
 
     // Getters and setters
 
@@ -90,12 +92,28 @@ public class Competitor {
         this.eventPoints = eventPoints;
     }
 
+    public Map<String, Integer> getEventPlacements() {
+        return eventPlacements;
+    }
+
+    public void setEventPlacements(Map<String, Integer> eventPlacements) {
+        this.eventPlacements = eventPlacements;
+    }
+
     public Map<String, Double> getTimes() {
         return times;
     }
 
     public void setTimes(Map<String, Double> times) {
         this.times = times;
+    }
+
+    public Map<String, String> getDisplayResults() {
+        return displayResults;
+    }
+
+    public void setDisplayResults(Map<String, String> displayResults) {
+        this.displayResults = displayResults;
     }
 
     // Helper to get full division string

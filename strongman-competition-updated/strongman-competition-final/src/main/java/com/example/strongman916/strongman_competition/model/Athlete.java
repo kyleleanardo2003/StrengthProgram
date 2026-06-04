@@ -12,14 +12,12 @@ public class Athlete {
     private String name;
     private String membership;
     private double bodyweight;
-
-    @Enumerated(EnumType.STRING)
-    private Division division;
+    private String division;
 
     // Constructors
     public Athlete() {}
 
-    public Athlete(String name, String membership, double bodyweight, Division division) {
+    public Athlete(String name, String membership, double bodyweight, String division) {
         this.name = name;
         this.membership = membership;
         this.bodyweight = bodyweight;
@@ -55,11 +53,11 @@ public class Athlete {
         this.bodyweight = bodyweight;
     }
 
-    public Division getDivision() {
+    public String getDivision() {
         return division;
     }
 
-    public void setDivision(Division division) {
+    public void setDivision(String division) {
         this.division = division;
     }
 }

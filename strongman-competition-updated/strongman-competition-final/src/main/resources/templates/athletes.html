@@ -26,21 +26,46 @@
         th {
             background-color: #2d2d2d;
         }
+        button {
+            padding: 8px 16px;
+            background-color: #a83232;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #7f2424;
+        }
+        .danger-zone {
+            border: 1px solid #8a2d2d;
+            margin: 24px 0;
+            padding: 16px;
+        }
     </style>
 </head>
 <body>
     <h1>Athletes</h1>
     <a th:href="@{/athletes/new}">Add Athlete</a>
+    <a th:href="@{/events}" style="margin-left: 16px;">Setup Events</a>
     <a th:href="@{/scores}" style="margin-left: 16px;">Enter Scores</a>
-    <a th:href="@{/}" style="margin-left: 16px;">Results</a>
+    <a th:href="@{/organizer}" style="margin-left: 16px;">Organizer Results</a>
+    <a th:href="@{/}" style="margin-left: 16px;">Public Results</a>
+
+    <section class="danger-zone">
+        <h2>Athlete Controls</h2>
+        <form th:action="@{/data/delete-competitors}" method="post">
+            <button type="submit">Delete All Athletes</button>
+        </form>
+    </section>
 
     <table>
         <thead>
         <tr>
             <th>Name</th>
             <th>Membership</th>
-            <th>Body Weight</th>
+            <th>Body Weight (kg)</th>
             <th>Division</th>
+            <th>Actions</th>
         </tr>
         </thead>
         <tbody>
@@ -48,7 +73,8 @@
             <td th:text="${athlete.name}">Name</td>
             <td th:text="${athlete.membership}">Membership</td>
             <td th:text="${athlete.bodyweight}">0.0</td>
-            <td th:text="${athlete.division.label}">Division</td>
+            <td th:text="${athlete.division}">Division</td>
+            <td><a th:href="@{/athletes/{id}/edit(id=${athlete.id})}">Edit</a></td>
         </tr>
         </tbody>
     </table>

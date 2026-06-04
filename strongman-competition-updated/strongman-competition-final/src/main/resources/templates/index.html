@@ -43,9 +43,7 @@
 <h1>Strongman Competition Results</h1>
 
 <div class="actions">
-    <a th:href="@{/athletes/new}">Add Athlete</a>
-    <a th:href="@{/scores}">Enter Scores</a>
-    <a th:href="@{/athletes}">Athletes</a>
+    <a th:href="@{/organizer}">Organizer Results</a>
 </div>
 
 <p th:if="${error}" th:text="${error}">Error</p>
@@ -57,7 +55,7 @@
         <thead>
         <tr>
             <th rowspan="2">Name</th>
-            <th rowspan="2">Body Weight</th>
+            <th rowspan="2">Body Weight (kg)</th>
             <th rowspan="2">Place</th>
             <th th:each="event : ${events}" colspan="2" th:text="${event.eventName}">Event</th>
             <th rowspan="2">Total Points</th>
@@ -75,7 +73,7 @@
             <td th:text="${competitor.bodyWeight}">0.0</td>
             <td th:text="${competitor.place}">1</td>
             <th:block th:each="event : ${events}">
-                <td th:text="${competitor.times[event.eventName] != null ? competitor.times[event.eventName] : competitor.scores[event.eventName]}">result</td>
+                <td th:text="${competitor.displayResults[event.eventName]}">result</td>
                 <td th:text="${competitor.eventPoints[event.eventName]}">points</td>
             </th:block>
             <td th:text="${competitor.totalPoints}">0.0</td>

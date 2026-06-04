@@ -18,6 +18,7 @@ public class EventResult {
 
     private String eventName;
     private Double result;
+    private String unit;
     private Double time;
 
     public Long getId() {
@@ -46,6 +47,14 @@ public class EventResult {
 
     public void setResult(Double result) {
         this.result = result;
+    }
+
+    public String getUnit() {
+        return unit;
+    }
+
+    public void setUnit(String unit) {
+        this.unit = unit;
     }
 
     public Double getTime() {

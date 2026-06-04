@@ -9,5 +9,6 @@ import java.util.Optional;
 
 public interface EventResultRepository extends JpaRepository<EventResult, Long> {
     List<EventResult> findByAthlete(Athlete athlete);
+    List<EventResult> findByEventName(String eventName);
     Optional<EventResult> findByAthleteAndEventName(Athlete athlete, String eventName);
 }
