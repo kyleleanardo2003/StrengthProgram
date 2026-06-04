@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Strongman Competition Results</title>
+    <style>
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: sans-serif;
+            padding: 20px;
+        }
+        h2 {
+            margin-top: 40px;
+            border-bottom: 2px solid #fff;
+            padding-bottom: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 40px;
+        }
+        th, td {
+            border: 1px solid #fff;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #111;
+        }
+    </style>
+</head>
+<body>
+<h1>Strongman Competition Results</h1>
+
+<div th:each="division : ${divisions}">
+    <h2 th:text="${division.key}">Division Name</h2>
+    <table>
+        <thead>
+        <tr>
+            <th rowspan="2">Name</th>
+            <th rowspan="2">Body Weight</th>
+            <th rowspan="2">Place</th>
+            <th th:each="event : ${events}" colspan="2" th:text="${event.eventName}">Event</th>
+            <th rowspan="2">Total Points</th>
+        </tr>
+        <tr>
+            <th:block th:each="event : ${events}">
+                <th>Result</th>
+                <th>Points</th>
+            </th:block>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="competitor : ${division.value}">
+            <td th:text="${competitor.name}">Name</td>
+            <td th:text="${competitor.bodyWeight}">0.0</td>
+            <td th:text="${competitor.place}">1</td>
+            <th:block th:each="event : ${events}">
+                <td th:text="${competitor.times[event.eventName] != null ? competitor.times[event.eventName] : competitor.scores[event.eventName]}">result</td>
+                <td th:text="${competitor.eventPoints[event.eventName]}">points</td>
+            </th:block>
+            <td th:text="${competitor.totalPoints}">0.0</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>

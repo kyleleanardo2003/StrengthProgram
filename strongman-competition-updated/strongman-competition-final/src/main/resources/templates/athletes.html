@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Athletes</title>
+    <style>
+        body {
+            background-color: #1e1e1e;
+            color: white;
+            font-family: sans-serif;
+            padding: 20px;
+        }
+        a {
+            color: #66b7ff;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #555;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #2d2d2d;
+        }
+    </style>
+</head>
+<body>
+    <h1>Athletes</h1>
+    <a th:href="@{/athletes/new}">Add Athlete</a>
+
+    <table>
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Body Weight</th>
+            <th>Division</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="athlete : ${athletes}">
+            <td th:text="${athlete.name}">Name</td>
+            <td th:text="${athlete.bodyweight}">0.0</td>
+            <td th:text="${athlete.division.label}">Division</td>
+        </tr>
+        </tbody>
+    </table>
+</body>
+</html>
