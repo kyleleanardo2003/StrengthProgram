@@ -28,10 +28,28 @@
         th {
             background-color: #111;
         }
+        a {
+            color: #66b7ff;
+        }
+        .actions {
+            margin-bottom: 24px;
+        }
+        .actions a {
+            margin-right: 16px;
+        }
     </style>
 </head>
 <body>
 <h1>Strongman Competition Results</h1>
+
+<div class="actions">
+    <a th:href="@{/athletes/new}">Add Athlete</a>
+    <a th:href="@{/scores}">Enter Scores</a>
+    <a th:href="@{/athletes}">Athletes</a>
+</div>
+
+<p th:if="${error}" th:text="${error}">Error</p>
+<p th:if="${divisions == null || divisions.isEmpty()}">No athletes have been added yet.</p>
 
 <div th:each="division : ${divisions}">
     <h2 th:text="${division.key}">Division Name</h2>

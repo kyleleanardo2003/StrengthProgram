@@ -31,11 +31,14 @@
 <body>
     <h1>Athletes</h1>
     <a th:href="@{/athletes/new}">Add Athlete</a>
+    <a th:href="@{/scores}" style="margin-left: 16px;">Enter Scores</a>
+    <a th:href="@{/}" style="margin-left: 16px;">Results</a>
 
     <table>
         <thead>
         <tr>
             <th>Name</th>
+            <th>Membership</th>
             <th>Body Weight</th>
             <th>Division</th>
         </tr>
@@ -43,6 +46,7 @@
         <tbody>
         <tr th:each="athlete : ${athletes}">
             <td th:text="${athlete.name}">Name</td>
+            <td th:text="${athlete.membership}">Membership</td>
             <td th:text="${athlete.bodyweight}">0.0</td>
             <td th:text="${athlete.division.label}">Division</td>
         </tr>
