@@ -1,0 +1,16 @@
+target/
+**/target/
+data/
+**/data/
+
+*.jar
+*.zip
+*.mv.db
+*.trace.db
+*.log
+
+**/sheets-key.json
+**/*service-account*.json
+
+.vscode/
+.idea/
