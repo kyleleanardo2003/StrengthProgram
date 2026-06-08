@@ -1,0 +1,11 @@
+target/
+data/
+
+*.log
+*.trace.db
+*.mv.db
+
+src/main/resources/sheets/*.json
+
+.vscode/
+.idea/

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Organizer Login</title>
+    <style>
+        .login-panel {
+            margin: 80px auto 0;
+            max-width: 340px;
+        }
+        .login-panel label {
+            display: block;
+            font-weight: 700;
+            margin: 14px 0 5px;
+        }
+        .login-panel input,
+        .login-panel button {
+            box-sizing: border-box;
+            padding: 8px;
+            width: 100%;
+        }
+        .login-panel button {
+            background: #4d4d4d;
+            border: 0;
+            color: #fff;
+            cursor: pointer;
+            font-weight: 700;
+            margin-top: 16px;
+        }
+        .login-message {
+            color: #fff;
+            font-weight: 700;
+            margin: 12px 0;
+        }
+    </style>
+    <link rel="stylesheet" th:href="@{/app.css}">
+</head>
+<body>
+<div th:replace="~{fragments/nav :: appNav}"></div>
+<main class="login-panel">
+    <h1 class="page-title">Organizer Login</h1>
+    <p class="login-message" th:if="${param.error}">Invalid username or password.</p>
+    <p class="login-message" th:if="${param.logout}">You have been logged out.</p>
+    <form th:action="@{/login}" method="post">
+        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+        <label for="username">Username</label>
+        <input id="username" name="username" type="text" autocomplete="username" required />
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required />
+        <button type="submit">Log In</button>
+    </form>
+    <p><a th:href="@{/}">Public Results</a></p>
+</main>
+</body>
+</html>

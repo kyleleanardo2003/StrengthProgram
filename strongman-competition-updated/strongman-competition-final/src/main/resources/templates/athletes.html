@@ -42,18 +42,22 @@
             padding: 16px;
         }
     </style>
+    <link rel="stylesheet" th:href="@{/app.css}">
 </head>
 <body>
-    <h1>Athletes</h1>
-    <a th:href="@{/athletes/new}">Add Athlete</a>
-    <a th:href="@{/events}" style="margin-left: 16px;">Setup Events</a>
-    <a th:href="@{/scores}" style="margin-left: 16px;">Enter Scores</a>
-    <a th:href="@{/organizer}" style="margin-left: 16px;">Organizer Results</a>
-    <a th:href="@{/}" style="margin-left: 16px;">Public Results</a>
+    <div th:replace="~{fragments/nav :: appNav}"></div>
+    <h1 class="page-title" th:text="${currentCompetition != null ? 'Athletes - ' + currentCompetition.name : 'Athletes'}">Athletes</h1>
+
+    <p class="page-actions">
+        <a class="hub-button" th:href="@{/athletes/new(competitionId=${competitionId})}">Add Athlete</a>
+        <a class="hub-button" th:href="@{/organizer(competitionId=${competitionId})}">Organizer Results</a>
+    </p>
 
     <section class="danger-zone">
         <h2>Athlete Controls</h2>
         <form th:action="@{/data/delete-competitors}" method="post">
+            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+            <input type="hidden" name="competitionId" th:value="${competitionId}" />
             <button type="submit">Delete All Athletes</button>
         </form>
     </section>

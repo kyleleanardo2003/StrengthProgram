@@ -38,13 +38,16 @@
             margin-right: 16px;
         }
     </style>
+    <link rel="stylesheet" th:href="@{/app.css}">
 </head>
 <body>
-<h1>Strongman Competition Results</h1>
-
-<div class="actions">
-    <a th:href="@{/organizer}">Organizer Results</a>
-</div>
+<div th:replace="~{fragments/nav :: appNav}"></div>
+<h1 class="page-title" th:text="${currentCompetition != null ? currentCompetition.name : 'Strongman Competition Results'}">Strongman Competition Results</h1>
+<p th:if="${currentCompetition != null}">
+    <span th:text="${currentCompetition.competitionDate}">Date</span>
+    <span th:if="${currentCompetition.location != null && !currentCompetition.location.isBlank()}"
+          th:text="${' - ' + currentCompetition.location}">Location</span>
+</p>
 
 <p th:if="${error}" th:text="${error}">Error</p>
 <p th:if="${divisions == null || divisions.isEmpty()}">No athletes have been added yet.</p>

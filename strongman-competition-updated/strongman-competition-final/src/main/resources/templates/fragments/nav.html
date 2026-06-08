@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="appNav">
+    <input class="nav-toggle" id="nav-toggle" type="checkbox" />
+    <label class="menu-button" for="nav-toggle" aria-label="Open navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+    </label>
+    <label class="menu-close" for="nav-toggle" aria-label="Close navigation">x</label>
+
+    <header class="app-topbar">
+        <div class="app-brand">StrongmanCast</div>
+    </header>
+
+    <aside class="side-menu">
+        <a th:href="@{/competitions#live-competitions}">Live Competitions</a>
+        <a th:href="@{/competitions#upcoming-competitions}">Upcoming Competitions</a>
+        <a th:href="@{/competitions#past-competitions}">Past Competitions</a>
+        <span class="theme-chip">Theme</span>
+    </aside>
+</div>
+</body>
+</html>

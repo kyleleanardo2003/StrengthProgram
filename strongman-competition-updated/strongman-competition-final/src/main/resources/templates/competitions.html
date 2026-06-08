@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Competitions</title>
+    <style>
+        input, select, button {
+            box-sizing: border-box;
+            padding: 7px;
+            width: 100%;
+        }
+        button {
+            background-color: #4d4d4d;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #777;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            text-align: center;
+        }
+        .form-grid {
+            display: grid;
+            gap: 12px;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        }
+        .field label {
+            display: block;
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+        }
+        .open-links a {
+            display: inline-block;
+            margin: 0 6px 4px;
+        }
+    </style>
+    <link rel="stylesheet" th:href="@{/app.css}">
+</head>
+<body>
+<div th:replace="~{fragments/nav :: appNav}"></div>
+
+<main class="hub-page">
+    <section class="hub-actions">
+        <details class="inline-create-form">
+            <summary class="hub-button">Create New Competition</summary>
+            <form class="form-grid" th:action="@{/competitions}" th:object="${competition}" method="post">
+                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <div class="field">
+                    <label for="name">Name</label>
+                    <input id="name" type="text" th:field="*{name}" required />
+                </div>
+                <div class="field">
+                    <label for="competitionDate">Date</label>
+                    <input id="competitionDate" type="date" th:field="*{competitionDate}" />
+                </div>
+                <div class="field">
+                    <label for="location">Location</label>
+                    <input id="location" type="text" th:field="*{location}" />
+                </div>
+                <div class="field">
+                    <label for="status">Status</label>
+                    <select id="status" th:field="*{status}">
+                        <option value="SETUP">Setup</option>
+                        <option value="LIVE">Live</option>
+                        <option value="COMPLETE">Complete</option>
+                    </select>
+                </div>
+                <button type="submit">Create</button>
+            </form>
+        </details>
+        <span class="hub-button">Upload Competition From Data File</span>
+    </section>
+
+    <section id="live-competitions" class="competition-table">
+        <h1>Live Competitions</h1>
+        <table>
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Date</th>
+                <th>Location</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:if="${liveCompetitions == null || liveCompetitions.isEmpty()}">
+                <td colspan="3">No live competitions right now.</td>
+            </tr>
+            <tr th:each="savedCompetition : ${liveCompetitions}">
+                <td>
+                    <span th:text="${savedCompetition.name}">Competition</span>
+                    <div class="open-links">
+                        <a th:href="@{/(competitionId=${savedCompetition.id})}">Results</a>
+                        <a th:href="@{/organizer(competitionId=${savedCompetition.id})}">Organizer</a>
+                    </div>
+                </td>
+                <td th:text="${savedCompetition.competitionDate}">Date</td>
+                <td th:text="${savedCompetition.location}">Location</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section id="upcoming-competitions" class="competition-table">
+        <h1>Upcoming Competitions</h1>
+        <table>
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Date</th>
+                <th>Location</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:if="${upcomingCompetitions == null || upcomingCompetitions.isEmpty()}">
+                <td colspan="3">No upcoming competitions have been created yet.</td>
+            </tr>
+            <tr th:each="savedCompetition : ${upcomingCompetitions}">
+                <td>
+                    <span th:text="${savedCompetition.name}">Competition</span>
+                    <div class="open-links">
+                        <a th:href="@{/(competitionId=${savedCompetition.id})}">Results</a>
+                        <a th:href="@{/organizer(competitionId=${savedCompetition.id})}">Organizer</a>
+                    </div>
+                </td>
+                <td th:text="${savedCompetition.competitionDate}">Date</td>
+                <td th:text="${savedCompetition.location}">Location</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section id="past-competitions" class="competition-table">
+        <h1>Past Competitions</h1>
+        <table>
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Date</th>
+                <th>Location</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:if="${pastCompetitions == null || pastCompetitions.isEmpty()}">
+                <td colspan="3">No past competitions have been archived yet.</td>
+            </tr>
+            <tr th:each="savedCompetition : ${pastCompetitions}">
+                <td>
+                    <span th:text="${savedCompetition.name}">Competition</span>
+                    <div class="open-links">
+                        <a th:href="@{/(competitionId=${savedCompetition.id})}">Results</a>
+                    </div>
+                </td>
+                <td th:text="${savedCompetition.competitionDate}">Date</td>
+                <td th:text="${savedCompetition.location}">Location</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+</body>
+</html>

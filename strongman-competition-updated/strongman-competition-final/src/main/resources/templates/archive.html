@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Competition Archive</title>
+    <style>
+        body {
+            background-color: #1e1e1e;
+            color: white;
+            font-family: sans-serif;
+            padding: 20px;
+        }
+        a {
+            color: #66b7ff;
+            margin-right: 16px;
+        }
+        table {
+            border-collapse: collapse;
+            margin-top: 24px;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #555;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #2d2d2d;
+        }
+    </style>
+    <link rel="stylesheet" th:href="@{/app.css}">
+</head>
+<body>
+<div th:replace="~{fragments/nav :: appNav}"></div>
+<h1 class="page-title">Competition Archive</h1>
+
+<p th:if="${competitions == null || competitions.isEmpty()}">No completed competitions have been archived yet.</p>
+
+<table th:if="${competitions != null && !competitions.isEmpty()}">
+    <thead>
+    <tr>
+        <th>Name</th>
+        <th>Date</th>
+        <th>Location</th>
+        <th>Results</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="competition : ${competitions}">
+        <td th:text="${competition.name}">Competition</td>
+        <td th:text="${competition.competitionDate}">Date</td>
+        <td th:text="${competition.location}">Location</td>
+        <td><a th:href="@{/(competitionId=${competition.id})}">View Results</a></td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>

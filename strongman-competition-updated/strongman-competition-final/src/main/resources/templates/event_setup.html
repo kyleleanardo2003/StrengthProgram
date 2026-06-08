@@ -112,28 +112,30 @@
             width: auto;
         }
     </style>
+    <link rel="stylesheet" th:href="@{/app.css}">
 </head>
 <body>
-<h1>Setup Events</h1>
-
-<nav>
-    <a th:href="@{/organizer}">Organizer Results</a>
-    <a th:href="@{/scores}">Enter Scores</a>
-    <a th:href="@{/}">Public Results</a>
-</nav>
+<div th:replace="~{fragments/nav :: appNav}"></div>
+<h1 class="page-title" th:text="${currentCompetition != null ? 'Setup Events - ' + currentCompetition.name : 'Setup Events'}">Setup Events</h1>
 
 <section class="danger-zone">
     <h2>Event Controls</h2>
     <form th:action="@{/data/autofill-base-model}" method="post">
+        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+        <input type="hidden" name="competitionId" th:value="${competitionId}" />
         <button class="autofill-button" type="submit">Autofill Base Model: Events, Athletes, Scores</button>
     </form>
     <form th:action="@{/data/delete-events}" method="post">
+        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+        <input type="hidden" name="competitionId" th:value="${competitionId}" />
         <button type="submit">Delete All Events</button>
     </form>
 </section>
 
 <h2>Scoring Settings</h2>
 <form th:action="@{/settings/tiebreaker}" method="post">
+    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+    <input type="hidden" name="competitionId" th:value="${competitionId}" />
     <label for="overallTiebreaker">Overall Tie Breaker:</label>
     <select id="overallTiebreaker" name="overallTiebreaker">
         <option value="EVENT_PLACINGS" th:selected="${settings.overallTiebreaker == 'EVENT_PLACINGS'}">
@@ -148,6 +150,8 @@
 
 <h2>Add Event</h2>
 <form class="event-form-grid" th:action="@{/events}" th:object="${event}" method="post">
+    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+    <input type="hidden" name="competitionId" th:value="${competitionId}" />
     <div class="field">
         <label for="sortOrder">Order</label>
         <input type="number" id="sortOrder" th:field="*{sortOrder}" required />
@@ -220,6 +224,8 @@
     <tr th:each="configuredEvent : ${events}">
         <td>
             <form class="edit-grid" th:action="@{/events/{id}(id=${configuredEvent.id})}" method="post">
+                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <input type="hidden" name="competitionId" th:value="${competitionId}" />
                 <div>
                     <label>Order</label>
                     <input type="number" name="sortOrder" th:value="${configuredEvent.sortOrder}" required />
@@ -271,6 +277,8 @@
                 <button type="submit">Save</button>
             </form>
             <form th:action="@{/events/{id}/delete(id=${configuredEvent.id})}" method="post">
+                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <input type="hidden" name="competitionId" th:value="${competitionId}" />
                 <button class="delete-button" type="submit">Delete Event</button>
             </form>
         </td>

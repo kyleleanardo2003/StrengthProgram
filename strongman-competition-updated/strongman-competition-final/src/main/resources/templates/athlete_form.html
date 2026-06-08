@@ -34,17 +34,16 @@
             margin-right: 16px;
         }
     </style>
+    <link rel="stylesheet" th:href="@{/app.css}">
 </head>
 <body>
-    <h1 th:text="${formTitle}">Add Athlete</h1>
-    <nav>
-        <a th:href="@{/}">Public Results</a>
-        <a th:href="@{/organizer}">Organizer Results</a>
-        <a th:href="@{/events}">Setup Events</a>
-        <a th:href="@{/athletes}">Athletes</a>
-    </nav>
+    <div th:replace="~{fragments/nav :: appNav}"></div>
+    <h1 class="page-title" th:text="${formTitle}">Add Athlete</h1>
 
     <form th:action="${formAction}" th:object="${athlete}" method="post">
+        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+        <input type="hidden" name="competitionId" th:value="${competitionId}" />
+
         <label for="name">Name:</label>
         <input type="text" id="name" th:field="*{name}" required />
 

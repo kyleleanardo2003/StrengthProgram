@@ -5,69 +5,78 @@
     <title>Organizer Results</title>
     <style>
         body {
-            background-color: #000;
-            color: #fff;
-            font-family: sans-serif;
+            background-color: #0d0f12;
+            color: #f4f7fb;
+            font-family: Arial, sans-serif;
+            margin: 0;
             padding: 20px;
         }
+        h1 {
+            margin: 0 0 12px;
+        }
         h2 {
-            margin-top: 40px;
-            border-bottom: 2px solid #fff;
-            padding-bottom: 5px;
+            margin: 32px 0 10px;
+            font-size: 1.2rem;
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 40px;
-        }
-        th, td {
-            border: 1px solid #fff;
-            padding: 8px;
-            text-align: center;
-        }
-        th {
-            background-color: #111;
-        }
-        input, select {
-            box-sizing: border-box;
-            width: 100%;
-            padding: 6px;
+        a {
+            color: #69b7ff;
+            margin-right: 16px;
         }
         button {
-            padding: 7px 12px;
             background-color: #007acc;
-            color: white;
             border: none;
+            color: white;
             cursor: pointer;
+            padding: 8px 14px;
         }
         button:hover {
             background-color: #005f99;
         }
-        .edit-row {
-            display: grid;
-            gap: 10px;
-            grid-template-columns: 1.3fr 1fr 0.8fr 0.8fr 0.8fr auto;
-            align-items: end;
+        input, select {
+            background-color: #111820;
+            border: 1px solid #3b4652;
+            box-sizing: border-box;
+            color: #f4f7fb;
+            font-size: 0.9rem;
+            min-width: 0;
+            padding: 6px;
+            width: 100%;
         }
-        .edit-row label {
-            display: block;
-            font-size: 0.85em;
-            margin-bottom: 4px;
-            text-align: left;
-        }
-        a {
-            color: #66b7ff;
+        input:focus, select:focus {
+            border-color: #69b7ff;
+            outline: none;
         }
         .actions {
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
-        .actions a {
-            margin-right: 16px;
+        .toolbar {
+            align-items: center;
+            display: flex;
+            gap: 12px;
+            justify-content: space-between;
+            margin: 18px 0;
+        }
+        .autosave-status {
+            color: #9fb1c3;
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+        .autosave-status.is-saving {
+            color: #ffd166;
+        }
+        .autosave-status.is-saved {
+            color: #78d381;
+        }
+        .autosave-status.is-error {
+            color: #ff7b7b;
         }
         .danger-zone {
             border: 1px solid #8a2d2d;
-            margin: 24px 0;
-            padding: 16px;
+            margin: 20px 0;
+            padding: 14px;
+        }
+        .danger-zone h2 {
+            margin-top: 0;
         }
         .danger-zone button {
             background-color: #a83232;
@@ -75,225 +84,281 @@
         .danger-zone button:hover {
             background-color: #7f2424;
         }
-        .score-entry-table th,
-        .score-entry-table td {
-            min-width: 180px;
+        .sheet-wrap {
+            border: 1px solid #3b4652;
+            margin-bottom: 28px;
+            max-height: 72vh;
+            overflow: auto;
+        }
+        table {
+            border-collapse: collapse;
+            min-width: 1200px;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #3b4652;
+            padding: 6px;
+            text-align: left;
             vertical-align: top;
         }
-        .score-entry-table th:first-child,
-        .score-entry-table td:first-child {
-            min-width: 190px;
+        th {
+            background-color: #161d25;
+            font-size: 0.78rem;
+            letter-spacing: 0.02em;
             position: sticky;
+            text-transform: uppercase;
+            top: 0;
+            z-index: 2;
+        }
+        .athlete-col {
+            background-color: #10161d;
             left: 0;
-            background-color: #000;
+            min-width: 170px;
+            position: sticky;
             z-index: 1;
         }
-        .score-cell {
+        th.athlete-col {
+            z-index: 3;
+        }
+        .small-col {
+            min-width: 88px;
+            width: 88px;
+        }
+        .medium-col {
+            min-width: 132px;
+            width: 132px;
+        }
+        .event-col {
+            min-width: 210px;
+            width: 210px;
+        }
+        .event-cell {
             display: grid;
             gap: 6px;
+            grid-template-columns: 1fr 72px;
         }
-        .score-cell label {
-            font-size: 0.75em;
-            text-align: left;
+        .event-cell .time-input {
+            min-width: 0;
         }
-        .score-save-bar {
-            display: flex;
-            justify-content: flex-end;
-            margin: 12px 0 24px;
+        .time-fields {
+            display: grid;
+            gap: 6px;
+            grid-column: 1 / span 2;
+            grid-template-columns: 1fr 1fr;
+        }
+        .points {
+            color: #9fb1c3;
+            font-size: 0.82rem;
+            grid-column: 1 / span 2;
+        }
+        .readonly {
+            color: #d7e1ea;
+            font-weight: 700;
+            padding: 7px 2px;
+        }
+        .empty-state {
+            color: #b9c4cf;
+            margin: 24px 0;
         }
     </style>
+    <link rel="stylesheet" th:href="@{/app.css}">
 </head>
 <body>
-<h1>Organizer Results</h1>
+<div th:replace="~{fragments/nav :: appNav}"></div>
+<h1 class="page-title" th:text="${currentCompetition != null ? currentCompetition.name + ' Organizer' : 'Organizer Results'}">Organizer Results</h1>
+<p th:if="${currentCompetition != null}">
+    <span th:text="${currentCompetition.status}">Status</span>
+    <span th:if="${currentCompetition.competitionDate != null}" th:text="${' - ' + currentCompetition.competitionDate}">Date</span>
+    <span th:if="${currentCompetition.location != null && !currentCompetition.location.isBlank()}"
+          th:text="${' - ' + currentCompetition.location}">Location</span>
+</p>
 
-<div class="actions">
-    <a th:href="@{/}">Public Results</a>
-    <a th:href="@{/events}">Setup Events</a>
-    <a th:href="@{/athletes/new}">Add Athlete</a>
-    <a th:href="@{/scores}">Enter Scores</a>
-    <a th:href="@{/athletes}">Athletes</a>
-</div>
+<p class="page-actions">
+    <a class="hub-button" th:href="@{/events(competitionId=${competitionId})}">Setup Events</a>
+    <a class="hub-button" th:href="@{/athletes/new(competitionId=${competitionId})}">Add Athlete</a>
+    <a class="hub-button" th:href="@{/athletes(competitionId=${competitionId})}">Manage Athletes</a>
+    <a class="hub-button" th:href="@{/(competitionId=${competitionId})}">Public Results</a>
+</p>
+
+<form th:if="${currentCompetition != null && currentCompetition.status != 'LIVE'}"
+      th:action="@{/competitions/{id}/status/LIVE(id=${competitionId})}" method="post">
+    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+    <button type="submit">Mark Live</button>
+</form>
+<form th:if="${currentCompetition != null && currentCompetition.status != 'COMPLETE'}"
+      th:action="@{/competitions/{id}/status/COMPLETE(id=${competitionId})}" method="post">
+    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+    <button type="submit">Mark Complete / Archive</button>
+</form>
 
 <section class="danger-zone">
     <h2>Organizer Data Control</h2>
     <form th:action="@{/data/delete-all}" method="post">
+        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+        <input type="hidden" name="competitionId" th:value="${competitionId}" />
         <button type="submit">Delete All Info</button>
     </form>
 </section>
 
 <p th:if="${error}" th:text="${error}">Error</p>
-<p th:if="${divisions == null || divisions.isEmpty()}">No athletes have been added yet.</p>
+<p class="empty-state" th:if="${divisions == null || divisions.isEmpty()}">No athletes have been added yet.</p>
+<p class="empty-state" th:if="${configuredEvents == null || configuredEvents.isEmpty()}">No events have been configured yet.</p>
 
-<h2>Enter Scores</h2>
-<p th:if="${configuredEvents == null || configuredEvents.isEmpty()}">No events have been configured yet.</p>
-<form th:if="${configuredEvents != null && !configuredEvents.isEmpty()}" th:action="@{/scores/bulk}" method="post">
-    <div th:each="divisionRows : ${scoreRowsByDivision}">
-        <h3 th:text="${divisionRows.key}">Division</h3>
-        <table class="score-entry-table">
-            <thead>
-            <tr>
-                <th>Athlete</th>
-                <th th:each="event : ${configuredEvents}" th:text="${event.eventName}">Event</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="row : ${divisionRows.value}">
-                <td>
-                    <strong th:text="${row.athlete.name}">Athlete</strong><br>
-                    <span th:text="${row.athlete.bodyweight + ' kg'}">0 kg</span>
-                </td>
-                <td th:each="event : ${configuredEvents}">
-                    <div class="score-cell">
-                        <label>Result</label>
-                        <input type="number" step="0.01"
-                               th:name="${'result__' + row.athlete.id + '__' + event.id}"
-                               th:value="${row.results[event.eventName] != null ? row.results[event.eventName].result : null}" />
-
-                        <label>Unit</label>
-                        <select th:name="${'unit__' + row.athlete.id + '__' + event.id}">
-                            <option value="" th:selected="${row.results[event.eventName] == null ? (event.defaultUnit == null || event.defaultUnit.isBlank()) : (row.results[event.eventName].unit == null || row.results[event.eventName].unit.isBlank())}">No unit</option>
-                            <option value="kg" th:selected="${row.results[event.eventName] == null ? event.defaultUnit == 'kg' : row.results[event.eventName].unit == 'kg'}">kg</option>
-                            <option value="lb" th:selected="${row.results[event.eventName] == null ? event.defaultUnit == 'lb' : row.results[event.eventName].unit == 'lb'}">lb</option>
-                            <option value="reps" th:selected="${row.results[event.eventName] == null ? event.defaultUnit == 'reps' : row.results[event.eventName].unit == 'reps'}">reps</option>
-                            <option value="m" th:selected="${row.results[event.eventName] == null ? event.defaultUnit == 'm' : row.results[event.eventName].unit == 'm'}">m</option>
-                            <option value="ft" th:selected="${row.results[event.eventName] == null ? event.defaultUnit == 'ft' : row.results[event.eventName].unit == 'ft'}">ft</option>
-                            <option value="sec" th:selected="${row.results[event.eventName] == null ? event.defaultUnit == 'sec' : row.results[event.eventName].unit == 'sec'}">sec</option>
-                        </select>
-
-                        <label th:if="${event.usesTime}">Time (sec)</label>
-                        <input th:if="${event.usesTime}" type="number" step="0.01"
-                               th:name="${'time__' + row.athlete.id + '__' + event.id}"
-                               th:value="${row.results[event.eventName] != null ? row.results[event.eventName].time : null}" />
-                    </div>
-                </td>
-            </tr>
-            </tbody>
-        </table>
+<form th:if="${configuredEvents != null && !configuredEvents.isEmpty() && scoreRowsByDivision != null && !scoreRowsByDivision.isEmpty()}"
+      id="score-sheet-form"
+      th:action="@{/scores/bulk}" method="post">
+    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+    <input type="hidden" name="competitionId" th:value="${competitionId}" />
+    <input type="hidden" id="autosave-url" th:value="@{/scores/bulk/autosave}" />
+    <div class="toolbar">
+        <span>Edit the sheet values. Changes save automatically.</span>
+        <span id="autosave-status" class="autosave-status" aria-live="polite">All changes saved</span>
     </div>
-    <div class="score-save-bar">
-        <button type="submit">Save All Scores</button>
-    </div>
+
+    <section th:each="divisionRows : ${scoreRowsByDivision}">
+        <h2 th:text="${divisionRows.key}">Division</h2>
+        <div class="sheet-wrap">
+            <table>
+                <thead>
+                <tr>
+                    <th class="small-col">Place</th>
+                    <th class="athlete-col">Athlete</th>
+                    <th class="medium-col">Membership</th>
+                    <th class="small-col">Body Wt (kg)</th>
+                    <th class="medium-col">Division</th>
+                    <th class="event-col" th:each="event : ${configuredEvents}" th:text="${event.eventName}">Event</th>
+                    <th class="small-col">Total</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="row : ${divisionRows.value}">
+                    <td class="small-col">
+                        <div class="readonly" th:text="${row.competitor != null ? row.competitor.place : ''}">1</div>
+                    </td>
+                    <td class="athlete-col">
+                        <input type="text"
+                               th:name="|athleteName__${row.athlete.id}|"
+                               th:value="${row.athlete.name}" required />
+                    </td>
+                    <td class="medium-col">
+                        <input type="text"
+                               th:name="|membership__${row.athlete.id}|"
+                               th:value="${row.athlete.membership}" />
+                    </td>
+                    <td class="small-col">
+                        <input type="number" step="0.1"
+                               th:name="|bodyweight__${row.athlete.id}|"
+                               th:value="${row.athlete.bodyweight}" required />
+                    </td>
+                    <td class="medium-col">
+                        <input type="text"
+                               th:name="|division__${row.athlete.id}|"
+                               th:value="${row.athlete.division}" required />
+                    </td>
+                    <td class="event-col" th:each="event : ${configuredEvents}">
+                        <div class="event-cell">
+                            <input type="number" step="0.01"
+                                   th:name="|result_${row.athlete.id}_${event.id}|"
+                                   th:value="${row.results[event.eventName] != null ? row.results[event.eventName].result : null}" />
+                            <select th:name="|unit_${row.athlete.id}_${event.id}|">
+                                <option value="" th:selected="${row.results[event.eventName] == null ? (event.defaultUnit == null || event.defaultUnit.isBlank()) : (row.results[event.eventName].unit == null || row.results[event.eventName].unit.isBlank())}">Unit</option>
+                                <option value="kg" th:selected="${row.results[event.eventName] == null ? event.defaultUnit == 'kg' : row.results[event.eventName].unit == 'kg'}">kg</option>
+                                <option value="lb" th:selected="${row.results[event.eventName] == null ? event.defaultUnit == 'lb' : row.results[event.eventName].unit == 'lb'}">lb</option>
+                                <option value="reps" th:selected="${row.results[event.eventName] == null ? event.defaultUnit == 'reps' : row.results[event.eventName].unit == 'reps'}">reps</option>
+                                <option value="m" th:selected="${row.results[event.eventName] == null ? event.defaultUnit == 'm' : row.results[event.eventName].unit == 'm'}">m</option>
+                                <option value="ft" th:selected="${row.results[event.eventName] == null ? event.defaultUnit == 'ft' : row.results[event.eventName].unit == 'ft'}">ft</option>
+                                <option value="sec" th:selected="${row.results[event.eventName] == null ? event.defaultUnit == 'sec' : row.results[event.eventName].unit == 'sec'}">sec</option>
+                            </select>
+                            <div class="time-fields" th:if="${event.usesTime}"
+                                 th:with="timeValue=${row.results[event.eventName] != null && row.results[event.eventName].time != null ? row.results[event.eventName].time : null}">
+                                <input class="time-input" type="number" step="1" min="0"
+                                       th:name="|timeMinutes_${row.athlete.id}_${event.id}|"
+                                       th:value="${timeValue != null ? T(java.lang.Math).floor(timeValue / 60) : null}"
+                                       placeholder="Min" />
+                                <input class="time-input" type="number" step="0.01" min="0"
+                                       th:name="|timeSeconds_${row.athlete.id}_${event.id}|"
+                                       th:value="${timeValue != null ? timeValue % 60 : null}"
+                                       placeholder="Sec" />
+                            </div>
+                            <div class="points">
+                                Points:
+                                <span th:text="${row.competitor != null ? row.competitor.eventPoints[event.eventName] : ''}">0</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="small-col">
+                        <div class="readonly" th:text="${row.competitor != null ? row.competitor.totalPoints : ''}">0</div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
 </form>
+<script>
+    const scoreSheetForm = document.getElementById('score-sheet-form');
+    const autosaveStatus = document.getElementById('autosave-status');
+    const autosaveUrl = document.getElementById('autosave-url');
+    let autosaveTimer;
+    let autosaveController;
 
-<div th:each="division : ${divisions}">
-    <h2 th:text="${division.key}">Division Name</h2>
-    <table>
-        <thead>
-        <tr>
-            <th rowspan="2">Name</th>
-            <th rowspan="2">Body Weight (kg)</th>
-            <th rowspan="2">Place</th>
-            <th th:each="event : ${events}" colspan="2" th:text="${event.eventName}">Event</th>
-            <th rowspan="2">Total Points</th>
-        </tr>
-        <tr>
-            <th:block th:each="event : ${events}">
-                <th>Result</th>
-                <th>Points</th>
-            </th:block>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="competitor : ${division.value}">
-            <td th:text="${competitor.name}">Name</td>
-            <td th:text="${competitor.bodyWeight}">0.0</td>
-            <td th:text="${competitor.place}">1</td>
-            <th:block th:each="event : ${events}">
-                <td th:text="${competitor.displayResults[event.eventName]}">result</td>
-                <td th:text="${competitor.eventPoints[event.eventName]}">points</td>
-            </th:block>
-            <td th:text="${competitor.totalPoints}">0.0</td>
-        </tr>
-        </tbody>
-    </table>
-</div>
+    function setAutosaveStatus(message, state) {
+        if (!autosaveStatus) {
+            return;
+        }
 
-<h2>Edit Athletes</h2>
-<table>
-    <thead>
-    <tr>
-        <th>Name</th>
-        <th>Membership</th>
-        <th>Body Weight (kg)</th>
-        <th>Division</th>
-        <th>Save</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr th:each="athlete : ${athletes}">
-        <td colspan="5">
-            <form class="edit-row" th:action="@{/athletes/{id}(id=${athlete.id})}" method="post">
-                <div>
-                    <label>Name</label>
-                    <input type="text" name="name" th:value="${athlete.name}" required />
-                </div>
-                <div>
-                    <label>Membership</label>
-                    <input type="text" name="membership" th:value="${athlete.membership}" />
-                </div>
-                <div>
-                    <label>Body Weight (kg)</label>
-                    <input type="number" step="0.1" name="bodyweight" th:value="${athlete.bodyweight}" required />
-                </div>
-                <div>
-                    <label>Division</label>
-                    <input type="text" name="division" th:value="${athlete.division}" required />
-                </div>
-                <button type="submit">Save</button>
-            </form>
-        </td>
-    </tr>
-    </tbody>
-</table>
+        autosaveStatus.textContent = message;
+        autosaveStatus.className = 'autosave-status' + (state ? ' ' + state : '');
+    }
 
-<h2>Edit Results</h2>
-<table>
-    <thead>
-    <tr>
-        <th>Athlete</th>
-        <th>Event</th>
-        <th>Result</th>
-        <th>Unit</th>
-        <th>Time (sec)</th>
-        <th>Save</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr th:each="result : ${results}">
-        <td colspan="6">
-            <form class="edit-row" th:action="@{/scores/{id}(id=${result.id})}" method="post">
-                <div>
-                    <label>Athlete</label>
-                    <span th:text="${result.athlete.name}">Athlete</span>
-                </div>
-                <div>
-                    <label>Event</label>
-                    <span th:text="${result.eventName}">Event</span>
-                </div>
-                <div>
-                    <label>Result</label>
-                    <input type="number" step="0.01" name="result" th:value="${result.result}" />
-                </div>
-                <div>
-                    <label>Unit</label>
-                    <select name="unit">
-                        <option value="" th:selected="${result.unit == null || result.unit.isBlank()}">No unit</option>
-                        <option value="kg" th:selected="${result.unit == 'kg'}">kg</option>
-                        <option value="lb" th:selected="${result.unit == 'lb'}">lb</option>
-                        <option value="reps" th:selected="${result.unit == 'reps'}">reps</option>
-                        <option value="m" th:selected="${result.unit == 'm'}">m</option>
-                        <option value="ft" th:selected="${result.unit == 'ft'}">ft</option>
-                    </select>
-                </div>
-                <div>
-                    <label>Time (sec)</label>
-                    <input type="number" step="0.01" name="time" th:value="${result.time}" />
-                </div>
-                <button type="submit">Save</button>
-            </form>
-        </td>
-    </tr>
-    </tbody>
-</table>
+    function scheduleAutosave() {
+        window.clearTimeout(autosaveTimer);
+        setAutosaveStatus('Saving soon...', 'is-saving');
+        autosaveTimer = window.setTimeout(saveSheet, 700);
+    }
+
+    async function saveSheet() {
+        if (!scoreSheetForm || !autosaveUrl) {
+            return;
+        }
+
+        if (autosaveController) {
+            autosaveController.abort();
+        }
+
+        autosaveController = new AbortController();
+        setAutosaveStatus('Saving...', 'is-saving');
+
+        try {
+            const response = await fetch(autosaveUrl.value, {
+                method: 'POST',
+                body: new FormData(scoreSheetForm),
+                credentials: 'same-origin',
+                signal: autosaveController.signal
+            });
+
+            if (!response.ok) {
+                throw new Error('Autosave failed');
+            }
+
+            setAutosaveStatus('Saved', 'is-saved');
+        } catch (error) {
+            if (error.name === 'AbortError') {
+                return;
+            }
+
+            setAutosaveStatus('Could not autosave', 'is-error');
+        }
+    }
+
+    if (scoreSheetForm) {
+        scoreSheetForm.addEventListener('input', scheduleAutosave);
+        scoreSheetForm.addEventListener('change', scheduleAutosave);
+        scoreSheetForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+            saveSheet();
+        });
+    }
+</script>
 </body>
 </html>
