@@ -117,7 +117,7 @@
                 <td>
                     <span th:text="${savedCompetition.name}">Competition</span>
                     <div class="open-links">
-                        <a th:href="@{/(competitionId=${savedCompetition.id})}">Results</a>
+                        <a th:href="@{/results(competitionId=${savedCompetition.id})}">Results</a>
                         <a th:if="${canEditCompetitions}" th:href="@{/organizer(competitionId=${savedCompetition.id})}">Organizer</a>
                     </div>
                     <details class="competition-edit" th:if="${canEditCompetitions}">
@@ -169,7 +169,7 @@
                 <td>
                     <span th:text="${savedCompetition.name}">Competition</span>
                     <div class="open-links">
-                        <a th:href="@{/(competitionId=${savedCompetition.id})}">Results</a>
+                        <a th:href="@{/results(competitionId=${savedCompetition.id})}">Results</a>
                         <a th:if="${canEditCompetitions}" th:href="@{/organizer(competitionId=${savedCompetition.id})}">Organizer</a>
                     </div>
                     <details class="competition-edit" th:if="${canEditCompetitions}">
@@ -221,7 +221,7 @@
                 <td>
                     <span th:text="${savedCompetition.name}">Competition</span>
                     <div class="open-links">
-                        <a th:href="@{/(competitionId=${savedCompetition.id})}">Results</a>
+                        <a th:href="@{/results(competitionId=${savedCompetition.id})}">Results</a>
                         <a th:if="${canEditCompetitions}" th:href="@{/organizer(competitionId=${savedCompetition.id})}">Organizer</a>
                     </div>
                     <details class="competition-edit" th:if="${canEditCompetitions}">

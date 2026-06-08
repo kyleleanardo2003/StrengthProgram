@@ -50,7 +50,7 @@
         <td th:text="${competition.name}">Competition</td>
         <td th:text="${competition.competitionDate}">Date</td>
         <td th:text="${competition.location}">Location</td>
-        <td><a th:href="@{/(competitionId=${competition.id})}">View Results</a></td>
+        <td><a th:href="@{/results(competitionId=${competition.id})}">View Results</a></td>
     </tr>
     </tbody>
 </table>

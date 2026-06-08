@@ -218,7 +218,7 @@
     <a class="hub-button" th:href="@{/events(competitionId=${competitionId})}">Setup Events</a>
     <a class="hub-button" th:href="@{/athletes/new(competitionId=${competitionId})}">Add Athlete</a>
     <a class="hub-button" th:href="@{/athletes(competitionId=${competitionId})}">Manage Athletes</a>
-    <a class="hub-button" th:href="@{/(competitionId=${competitionId})}">Public Results</a>
+    <a class="hub-button" th:href="@{/results(competitionId=${competitionId})}">Public Results</a>
 </p>
 
 <form th:if="${currentCompetition != null && currentCompetition.status != 'LIVE'}"

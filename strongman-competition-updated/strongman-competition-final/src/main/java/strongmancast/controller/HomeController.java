@@ -40,6 +40,11 @@ public class HomeController {
     }
 
     @GetMapping("/")
+    public String home() {
+        return "redirect:/competitions";
+    }
+
+    @GetMapping("/results")
     public String home(@RequestParam(required = false) Long competitionId, Model model, Principal principal) {
         model.addAttribute("canEditCompetitions", principal != null);
         try {
