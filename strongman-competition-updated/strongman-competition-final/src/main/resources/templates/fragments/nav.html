@@ -20,6 +20,7 @@
         <a th:href="@{/competitions#upcoming-competitions}">Upcoming Competitions</a>
         <a th:href="@{/competitions#past-competitions}">Past Competitions</a>
         <a th:if="${organizerLoggedIn}" th:href="@{/organizer}">Organizer Dashboard</a>
+        <a th:if="${organizerLoggedIn}" th:href="@{/settings/organizer}">Organizer Settings</a>
         <a th:unless="${organizerLoggedIn}" th:href="@{/organizer}">Organizer Login</a>
         <form class="menu-logout" th:if="${organizerLoggedIn}" th:action="@{/logout}" method="post">
             <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />

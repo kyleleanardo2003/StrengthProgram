@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Organizer Settings</title>
+    <style>
+        .settings-panel {
+            margin: 52px auto 0;
+            max-width: 420px;
+        }
+        .settings-panel label {
+            display: block;
+            font-weight: 700;
+            margin: 16px 0 5px;
+        }
+        .settings-panel input,
+        .settings-panel button {
+            box-sizing: border-box;
+            padding: 8px;
+            width: 100%;
+        }
+        .settings-panel button {
+            background: #4d4d4d;
+            border: 0;
+            color: #fff;
+            cursor: pointer;
+            font-weight: 700;
+            margin-top: 18px;
+        }
+        .settings-message {
+            font-weight: 700;
+            margin: 14px 0;
+        }
+        .settings-error {
+            color: #ff8585;
+        }
+    </style>
+    <link rel="stylesheet" th:href="@{/app.css}">
+</head>
+<body>
+<div th:replace="~{fragments/nav :: appNav}"></div>
+<main class="settings-panel">
+    <h1 class="page-title">Organizer Settings</h1>
+    <p class="settings-message" th:if="${settingsMessage}" th:text="${settingsMessage}">Saved</p>
+    <p class="settings-message settings-error" th:if="${settingsError}" th:text="${settingsError}">Error</p>
+
+    <form th:action="@{/settings/organizer}" method="post">
+        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+        <label for="username">Username</label>
+        <input id="username" name="username" type="text"
+               th:value="${organizerAccount.username}" autocomplete="username" required />
+
+        <label for="password">New Password</label>
+        <input id="password" name="password" type="password" autocomplete="new-password" />
+
+        <label for="confirmPassword">Confirm New Password</label>
+        <input id="confirmPassword" name="confirmPassword" type="password" autocomplete="new-password" />
+
+        <button type="submit">Update Login</button>
+    </form>
+</main>
+</body>
+</html>
