@@ -28,8 +28,9 @@ public class StrongmanCompetitionApplication {
 		}
 
 		String[] credentials = userInfo.split(":", 2);
+		int port = databaseUri.getPort() == -1 ? 5432 : databaseUri.getPort();
 		String jdbcUrl = "jdbc:postgresql://" + databaseUri.getHost()
-				+ ":" + databaseUri.getPort()
+				+ ":" + port
 				+ databaseUri.getPath();
 
 		if (databaseUri.getQuery() != null && !databaseUri.getQuery().isBlank()) {
