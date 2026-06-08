@@ -70,6 +70,40 @@
         .autosave-status.is-error {
             color: #ff7b7b;
         }
+        .competition-title-form {
+            align-items: center;
+            display: grid;
+            gap: 8px;
+            grid-template-columns: minmax(240px, 520px) auto;
+            margin: 0 0 10px;
+        }
+        .competition-title-form input {
+            background: transparent;
+            border-color: transparent;
+            color: #fff;
+            font-size: 1.8rem;
+            font-weight: 800;
+            padding: 4px 0;
+        }
+        .competition-title-form input:focus {
+            border-color: #69b7ff;
+            padding-left: 6px;
+        }
+        .title-save-status {
+            color: #9fb1c3;
+            font-size: 0.85rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .title-save-status.is-saving {
+            color: #ffd166;
+        }
+        .title-save-status.is-saved {
+            color: #78d381;
+        }
+        .title-save-status.is-error {
+            color: #ff7b7b;
+        }
         .danger-zone {
             border: 1px solid #8a2d2d;
             margin: 20px 0;
@@ -165,7 +199,14 @@
 </head>
 <body>
 <div th:replace="~{fragments/nav :: appNav}"></div>
-<h1 class="page-title" th:text="${currentCompetition != null ? currentCompetition.name + ' Organizer' : 'Organizer Results'}">Organizer Results</h1>
+<form class="competition-title-form" th:if="${currentCompetition != null}"
+      id="competition-title-form"
+      th:action="@{/competitions/{id}/name(id=${competitionId})}" method="post">
+    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+    <input id="competition-name-input" type="text" name="name" th:value="${currentCompetition.name}" required />
+    <span id="title-save-status" class="title-save-status" aria-live="polite">Name saved</span>
+</form>
+<h1 class="page-title" th:unless="${currentCompetition != null}">Organizer Results</h1>
 <p th:if="${currentCompetition != null}">
     <span th:text="${currentCompetition.status}">Status</span>
     <span th:if="${currentCompetition.competitionDate != null}" th:text="${' - ' + currentCompetition.competitionDate}">Date</span>
@@ -296,6 +337,57 @@
     </section>
 </form>
 <script>
+    const competitionTitleForm = document.getElementById('competition-title-form');
+    const competitionNameInput = document.getElementById('competition-name-input');
+    const titleSaveStatus = document.getElementById('title-save-status');
+    let titleSaveTimer;
+
+    function setTitleSaveStatus(message, state) {
+        if (!titleSaveStatus) {
+            return;
+        }
+
+        titleSaveStatus.textContent = message;
+        titleSaveStatus.className = 'title-save-status' + (state ? ' ' + state : '');
+    }
+
+    async function saveCompetitionTitle() {
+        if (!competitionTitleForm || !competitionNameInput || !competitionNameInput.value.trim()) {
+            return;
+        }
+
+        setTitleSaveStatus('Saving...', 'is-saving');
+
+        try {
+            const response = await fetch(competitionTitleForm.action, {
+                method: 'POST',
+                body: new FormData(competitionTitleForm),
+                credentials: 'same-origin'
+            });
+
+            if (!response.ok) {
+                throw new Error('Name save failed');
+            }
+
+            setTitleSaveStatus('Name saved', 'is-saved');
+        } catch (error) {
+            setTitleSaveStatus('Could not save name', 'is-error');
+        }
+    }
+
+    if (competitionTitleForm && competitionNameInput) {
+        competitionNameInput.addEventListener('input', function () {
+            window.clearTimeout(titleSaveTimer);
+            setTitleSaveStatus('Saving soon...', 'is-saving');
+            titleSaveTimer = window.setTimeout(saveCompetitionTitle, 600);
+        });
+        competitionTitleForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+            window.clearTimeout(titleSaveTimer);
+            saveCompetitionTitle();
+        });
+    }
+
     const scoreSheetForm = document.getElementById('score-sheet-form');
     const autosaveStatus = document.getElementById('autosave-status');
     const autosaveUrl = document.getElementById('autosave-url');

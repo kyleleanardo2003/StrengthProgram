@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.security.Principal;
 
@@ -68,6 +70,15 @@ public class CompetitionController {
         existingCompetition.setStatus(competition.getStatus());
         competitionRepository.save(existingCompetition);
         return "redirect:/competitions";
+    }
+
+    @PostMapping("/competitions/{id}/name")
+    @ResponseBody
+    public String updateCompetitionName(@PathVariable Long id, @RequestParam String name) {
+        Competition competition = competitionRepository.findById(id).orElseThrow();
+        competition.setName(name);
+        competitionRepository.save(competition);
+        return "ok";
     }
 
     @PostMapping("/competitions/{id}/status/{status}")
