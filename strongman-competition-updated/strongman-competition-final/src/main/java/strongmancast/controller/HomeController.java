@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.security.Principal;
 import java.util.*;
 
 @Controller
@@ -39,7 +40,8 @@ public class HomeController {
     }
 
     @GetMapping("/")
-    public String home(@RequestParam(required = false) Long competitionId, Model model) {
+    public String home(@RequestParam(required = false) Long competitionId, Model model, Principal principal) {
+        model.addAttribute("canEditCompetitions", principal != null);
         try {
             Competition competition = competitionContextService.currentCompetition(competitionId);
             addResultsModel(competition, model);
