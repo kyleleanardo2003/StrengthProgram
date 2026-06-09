@@ -23,6 +23,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/results").permitAll()
                         .requestMatchers(HttpMethod.GET, "/archive").permitAll()
                         .requestMatchers(HttpMethod.GET, "/competitions").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/events/*/live").permitAll()
                         .requestMatchers("/organizer", "/competitions/**", "/athletes/**", "/events/**", "/scores/**", "/data/**", "/settings/**").authenticated()
                         .anyRequest().authenticated()
                 )

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Event Monitor</title>
+    <style>
+        .monitor-page {
+            margin: 0 auto;
+            max-width: 980px;
+        }
+        .monitor-panel {
+            border: 1px solid #555;
+            margin: 18px 0 28px;
+            padding: 16px;
+        }
+        .monitor-grid {
+            display: grid;
+            gap: 12px;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            align-items: end;
+        }
+        .monitor-grid label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        .monitor-grid select,
+        .monitor-grid button {
+            box-sizing: border-box;
+            padding: 8px;
+            width: 100%;
+        }
+        .monitor-grid button {
+            background: #4d4d4d;
+            border: 0;
+            color: #fff;
+            cursor: pointer;
+            font-weight: 700;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #666;
+            padding: 8px;
+            text-align: left;
+        }
+        tr.is-active {
+            background: #153a24;
+            outline: 2px solid #55d187;
+        }
+    </style>
+    <link rel="stylesheet" th:href="@{/app.css}">
+</head>
+<body>
+<div th:replace="~{fragments/nav :: appNav}"></div>
+<main class="monitor-page">
+    <h1 class="page-title" th:text="${event.eventName + ' Monitor'}">Event Monitor</h1>
+    <p th:if="${currentCompetition != null}" th:text="${currentCompetition.name}">Competition</p>
+    <p class="page-actions">
+        <a class="hub-button" th:href="@{/events(competitionId=${competitionId})}">Back to Events</a>
+        <a class="hub-button" th:href="@{/events/{id}/live(id=${event.id})}">Public Event Page</a>
+        <a class="hub-button" th:href="@{/organizer(competitionId=${competitionId})}">Organizer Results</a>
+    </p>
+
+    <section class="monitor-panel">
+        <h2>Live Competitor Highlight</h2>
+        <form class="monitor-grid" th:action="@{/events/{id}/monitor(id=${event.id})}" method="post">
+            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+            <div>
+                <label for="activeSlots">Competitors at Once</label>
+                <select id="activeSlots" name="activeSlots">
+                    <option value="1" th:selected="${event.activeSlots != 2}">1 competitor</option>
+                    <option value="2" th:selected="${event.activeSlots == 2}">2 competitors</option>
+                </select>
+            </div>
+            <div>
+                <label for="activeAthleteOneId">Competitor 1</label>
+                <select id="activeAthleteOneId" name="activeAthleteOneId">
+                    <option value="">None selected</option>
+                    <option th:each="athlete : ${athletes}"
+                            th:value="${athlete.id}"
+                            th:selected="${event.activeAthleteOneId == athlete.id}"
+                            th:text="${athlete.name + ' - ' + athlete.division}">Athlete</option>
+                </select>
+            </div>
+            <div>
+                <label for="activeAthleteTwoId">Competitor 2</label>
+                <select id="activeAthleteTwoId" name="activeAthleteTwoId">
+                    <option value="">None selected</option>
+                    <option th:each="athlete : ${athletes}"
+                            th:value="${athlete.id}"
+                            th:selected="${event.activeAthleteTwoId == athlete.id}"
+                            th:text="${athlete.name + ' - ' + athlete.division}">Athlete</option>
+                </select>
+            </div>
+            <button type="submit">Update Monitor</button>
+        </form>
+    </section>
+
+    <section>
+        <h2>Event Group</h2>
+        <table>
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Division</th>
+                <th>Body Weight (kg)</th>
+                <th>Status</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:if="${athletes == null || athletes.isEmpty()}">
+                <td colspan="4">No athletes have been added yet.</td>
+            </tr>
+            <tr th:each="athlete : ${athletes}" th:classappend="${activeAthleteIds.contains(athlete.id)} ? 'is-active'">
+                <td th:text="${athlete.name}">Name</td>
+                <td th:text="${athlete.division}">Division</td>
+                <td th:text="${athlete.bodyweight}">0</td>
+                <td th:text="${activeAthleteIds.contains(athlete.id)} ? 'Going now' : ''">Status</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+</body>
+</html>

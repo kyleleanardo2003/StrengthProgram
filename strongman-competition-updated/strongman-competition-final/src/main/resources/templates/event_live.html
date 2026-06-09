@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="refresh" content="10">
+    <title>Live Event</title>
+    <style>
+        .live-event-page {
+            margin: 0 auto;
+            max-width: 900px;
+        }
+        .event-meta {
+            color: #c8d2dc;
+            font-weight: 700;
+            margin: 8px 0 24px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #777;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            text-align: center;
+        }
+        tr.is-active {
+            background: #153a24;
+            outline: 3px solid #55d187;
+        }
+        .status-pill {
+            color: #78d381;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+    </style>
+    <link rel="stylesheet" th:href="@{/app.css}">
+</head>
+<body>
+<div th:replace="~{fragments/nav :: appNav}"></div>
+<main class="live-event-page">
+    <h1 class="page-title" th:text="${event.eventName}">Event</h1>
+    <p class="event-meta" th:if="${currentCompetition != null}" th:text="${currentCompetition.name}">Competition</p>
+    <p class="page-actions">
+        <a class="hub-button" th:href="@{/results(competitionId=${competitionId})}">Competition Results</a>
+    </p>
+
+    <table>
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Division</th>
+            <th>Body Weight (kg)</th>
+            <th>Status</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:if="${athletes == null || athletes.isEmpty()}">
+            <td colspan="4">No athletes have been added yet.</td>
+        </tr>
+        <tr th:each="athlete : ${athletes}" th:classappend="${activeAthleteIds.contains(athlete.id)} ? 'is-active'">
+            <td th:text="${athlete.name}">Name</td>
+            <td th:text="${athlete.division}">Division</td>
+            <td th:text="${athlete.bodyweight}">0</td>
+            <td>
+                <span class="status-pill"
+                      th:if="${activeAthleteIds.contains(athlete.id)}">Going Now</span>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</main>
+</body>
+</html>

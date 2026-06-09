@@ -267,7 +267,9 @@
                     <th class="medium-col">Membership</th>
                     <th class="small-col">Body Wt (kg)</th>
                     <th class="medium-col">Division</th>
-                    <th class="event-col" th:each="event : ${configuredEvents}" th:text="${event.eventName}">Event</th>
+                    <th class="event-col" th:each="event : ${configuredEvents}">
+                        <a th:href="@{/events/{id}/monitor(id=${event.id})}" th:text="${event.eventName}">Event</a>
+                    </th>
                     <th class="small-col">Total</th>
                 </tr>
                 </thead>

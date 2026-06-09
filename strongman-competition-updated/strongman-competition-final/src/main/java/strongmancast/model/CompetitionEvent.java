@@ -19,6 +19,9 @@ public class CompetitionEvent {
     private boolean requiresCompletionForTimeRanking;
     private Double completionTarget;
     private String extraFields;
+    private Integer activeSlots = 1;
+    private Long activeAthleteOneId;
+    private Long activeAthleteTwoId;
 
     @ManyToOne
     private Competition competition;
@@ -105,6 +108,30 @@ public class CompetitionEvent {
 
     public void setExtraFields(String extraFields) {
         this.extraFields = extraFields;
+    }
+
+    public Integer getActiveSlots() {
+        return activeSlots;
+    }
+
+    public void setActiveSlots(Integer activeSlots) {
+        this.activeSlots = activeSlots;
+    }
+
+    public Long getActiveAthleteOneId() {
+        return activeAthleteOneId;
+    }
+
+    public void setActiveAthleteOneId(Long activeAthleteOneId) {
+        this.activeAthleteOneId = activeAthleteOneId;
+    }
+
+    public Long getActiveAthleteTwoId() {
+        return activeAthleteTwoId;
+    }
+
+    public void setActiveAthleteTwoId(Long activeAthleteTwoId) {
+        this.activeAthleteTwoId = activeAthleteTwoId;
     }
 
     public Competition getCompetition() {

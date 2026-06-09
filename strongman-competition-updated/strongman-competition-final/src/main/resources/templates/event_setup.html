@@ -281,6 +281,10 @@
                 <input type="hidden" name="competitionId" th:value="${competitionId}" />
                 <button class="delete-button" type="submit">Delete Event</button>
             </form>
+            <p>
+                <a class="hub-button" th:href="@{/events/{id}/monitor(id=${configuredEvent.id})}">Event Monitor</a>
+                <a class="hub-button" th:href="@{/events/{id}/live(id=${configuredEvent.id})}">Public Event Page</a>
+            </p>
         </td>
     </tr>
     </tbody>
