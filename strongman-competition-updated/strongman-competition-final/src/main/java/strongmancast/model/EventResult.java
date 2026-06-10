@@ -20,6 +20,7 @@ public class EventResult {
     private Double result;
     private String unit;
     private Double time;
+    private Double secondaryTime;
 
     @ManyToOne
     private Competition competition;
@@ -66,6 +67,14 @@ public class EventResult {
 
     public void setTime(Double time) {
         this.time = time;
+    }
+
+    public Double getSecondaryTime() {
+        return secondaryTime;
+    }
+
+    public void setSecondaryTime(Double secondaryTime) {
+        this.secondaryTime = secondaryTime;
     }
 
     public Competition getCompetition() {

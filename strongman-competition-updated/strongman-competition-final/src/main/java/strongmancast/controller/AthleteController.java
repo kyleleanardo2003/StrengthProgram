@@ -3,8 +3,10 @@ package strongmancast.controller;
 import strongmancast.model.Athlete;
 import strongmancast.model.Competition;
 import strongmancast.repository.AthleteRepository;
+import strongmancast.repository.EventResultRepository;
 import strongmancast.service.CompetitionContextService;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,10 +14,16 @@ import org.springframework.web.bind.annotation.*;
 public class AthleteController {
 
     private final AthleteRepository athleteRepository;
+    private final EventResultRepository eventResultRepository;
     private final CompetitionContextService competitionContextService;
 
-    public AthleteController(AthleteRepository athleteRepository, CompetitionContextService competitionContextService) {
+    public AthleteController(
+            AthleteRepository athleteRepository,
+            EventResultRepository eventResultRepository,
+            CompetitionContextService competitionContextService
+    ) {
         this.athleteRepository = athleteRepository;
+        this.eventResultRepository = eventResultRepository;
         this.competitionContextService = competitionContextService;
     }
 
@@ -62,6 +70,16 @@ public class AthleteController {
         athleteRepository.save(athlete);
         Long competitionId = athlete.getCompetition() == null ? null : athlete.getCompetition().getId();
         return "redirect:/organizer" + (competitionId == null ? "" : "?competitionId=" + competitionId);
+    }
+
+    @PostMapping("/athletes/{id}/delete")
+    @Transactional
+    public String deleteAthlete(@PathVariable Long id) {
+        Athlete athlete = athleteRepository.findById(id).orElseThrow();
+        Long competitionId = athlete.getCompetition() == null ? null : athlete.getCompetition().getId();
+        eventResultRepository.deleteByAthlete(athlete);
+        athleteRepository.delete(athlete);
+        return "redirect:/athletes" + (competitionId == null ? "" : "?competitionId=" + competitionId);
     }
 
     @GetMapping("/athletes")

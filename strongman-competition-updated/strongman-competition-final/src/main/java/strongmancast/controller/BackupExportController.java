@@ -145,7 +145,7 @@ public class BackupExportController {
 
     private void writeRawResultsSheet(Workbook workbook, CellStyle headerStyle, CellStyle dataStyle, List<EventResult> results) {
         Sheet sheet = workbook.createSheet("Raw Results");
-        writeHeader(sheet.createRow(0), headerStyle, "Athlete", "Event", "Result", "Unit", "Time (sec)");
+        writeHeader(sheet.createRow(0), headerStyle, "Athlete", "Event", "Result", "Unit", "Time (sec)", "Secondary Time (sec)");
         int rowIndex = 1;
         List<EventResult> orderedResults = results.stream()
                 .sorted(Comparator
@@ -158,9 +158,10 @@ public class BackupExportController {
                     result.getEventName(),
                     result.getResult(),
                     result.getUnit(),
-                    result.getTime());
+                    result.getTime(),
+                    result.getSecondaryTime());
         }
-        autosize(sheet, 5);
+        autosize(sheet, 6);
     }
 
     private void writeScoreSheet(
@@ -176,8 +177,11 @@ public class BackupExportController {
         writeHeaderCells(header, headerStyle, 0, "Athlete", "Division", "Body Weight (kg)");
         int column = 3;
         for (CompetitionEvent event : events) {
-            writeHeaderCells(header, headerStyle, column, event.getEventName() + " Result", event.getEventName() + " Time (sec)");
-            column += 2;
+            writeHeaderCells(header, headerStyle, column,
+                    event.getEventName() + " Result",
+                    event.getEventName() + " Time (sec)",
+                    event.getEventName() + " Secondary Time (sec)");
+            column += 3;
         }
 
         Map<String, EventResult> resultsByAthleteAndEvent = results.stream()
@@ -198,7 +202,8 @@ public class BackupExportController {
                 EventResult result = resultsByAthleteAndEvent.get(athlete.getId() + "|" + event.getEventName());
                 writeCell(row, column, formatResult(result), dataStyle);
                 writeCell(row, column + 1, result == null ? null : result.getTime(), dataStyle);
-                column += 2;
+                writeCell(row, column + 2, result == null ? null : result.getSecondaryTime(), dataStyle);
+                column += 3;
             }
         }
         autosize(sheet, Math.max(3, column));

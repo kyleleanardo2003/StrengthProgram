@@ -47,6 +47,7 @@ public class ScoreController {
             @RequestParam(required = false) Double result,
             @RequestParam(required = false) String unit,
             @RequestParam(required = false) Double time,
+            @RequestParam(required = false) Double secondaryTime,
             @RequestParam(required = false) String returnTo,
             @RequestParam(required = false) Long competitionId
     ) {
@@ -62,6 +63,7 @@ public class ScoreController {
         eventResult.setResult(result);
         eventResult.setUnit(resolveUnit(competition, eventName, unit));
         eventResult.setTime(time);
+        eventResult.setSecondaryTime(secondaryTime);
         eventResultRepository.save(eventResult);
 
         return redirectTo(returnTo, "/organizer");
@@ -115,10 +117,11 @@ public class ScoreController {
             Double result = parseOptionalDouble(params.get("result" + suffix));
             String unit = params.get("unit" + suffix);
             Double time = parseTime(params, suffix);
+            Double secondaryTime = parseSecondaryTime(params, suffix);
 
             Optional<EventResult> existingResult = eventResultRepository
                     .findByAthleteAndCompetitionAndEventName(athlete.get(), competition, event.get().getEventName());
-            if (existingResult.isEmpty() && result == null && time == null) {
+            if (existingResult.isEmpty() && result == null && time == null && secondaryTime == null) {
                 continue;
             }
 
@@ -129,6 +132,7 @@ public class ScoreController {
             eventResult.setResult(result);
             eventResult.setUnit(resolveUnit(competition, event.get().getEventName(), unit));
             eventResult.setTime(time);
+            eventResult.setSecondaryTime(secondaryTime);
             eventResultRepository.save(eventResult);
         }
     }
@@ -187,12 +191,14 @@ public class ScoreController {
             @RequestParam(required = false) Double result,
             @RequestParam(required = false) String unit,
             @RequestParam(required = false) Double time,
+            @RequestParam(required = false) Double secondaryTime,
             @RequestParam(required = false) String returnTo
     ) {
         EventResult eventResult = eventResultRepository.findById(id).orElseThrow();
         eventResult.setResult(result);
         eventResult.setUnit(unit);
         eventResult.setTime(time);
+        eventResult.setSecondaryTime(secondaryTime);
         eventResultRepository.save(eventResult);
         String fallback = eventResult.getCompetition() == null
                 ? "/organizer"
@@ -240,6 +246,21 @@ public class ScoreController {
 
         Double minutes = parseOptionalDouble(params.get("timeMinutes" + suffix));
         Double seconds = parseOptionalDouble(params.get("timeSeconds" + suffix));
+        if (minutes == null && seconds == null) {
+            return null;
+        }
+
+        return (minutes == null ? 0.0 : minutes * 60.0) + (seconds == null ? 0.0 : seconds);
+    }
+
+    private Double parseSecondaryTime(Map<String, String> params, String suffix) {
+        Double directTime = parseOptionalDouble(params.get("secondaryTime" + suffix));
+        if (directTime != null) {
+            return directTime;
+        }
+
+        Double minutes = parseOptionalDouble(params.get("secondaryTimeMinutes" + suffix));
+        Double seconds = parseOptionalDouble(params.get("secondaryTimeSeconds" + suffix));
         if (minutes == null && seconds == null) {
             return null;
         }

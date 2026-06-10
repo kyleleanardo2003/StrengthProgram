@@ -41,6 +41,14 @@
             margin: 24px 0;
             padding: 16px;
         }
+        .action-cell {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+        .action-cell form {
+            margin: 0;
+        }
     </style>
     <link rel="stylesheet" th:href="@{/app.css}">
 </head>
@@ -82,7 +90,16 @@
             <td th:text="${athlete.bodyweight}">0.0</td>
             <td th:text="${athlete.division}">Division</td>
             <td th:text="${athlete.eventGroup}">Event Group</td>
-            <td><a th:href="@{/athletes/{id}/edit(id=${athlete.id})}">Edit</a></td>
+            <td>
+                <div class="action-cell">
+                    <a th:href="@{/athletes/{id}/edit(id=${athlete.id})}">Edit</a>
+                    <form th:action="@{/athletes/{id}/delete(id=${athlete.id})}" method="post"
+                          onsubmit="return confirm('Delete this athlete and all of their scores?');">
+                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                        <button type="submit">Delete</button>
+                    </form>
+                </div>
+            </td>
         </tr>
         </tbody>
     </table>

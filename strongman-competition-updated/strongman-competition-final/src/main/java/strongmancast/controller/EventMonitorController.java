@@ -186,7 +186,7 @@ public class EventMonitorController {
     }
 
     private boolean hasScore(EventResult result) {
-        return result.getResult() != null || result.getTime() != null;
+        return result.getResult() != null || result.getTime() != null || result.getSecondaryTime() != null;
     }
 
     private void saveScoresForEvent(CompetitionEvent event, Map<String, String> params) {
@@ -199,12 +199,13 @@ public class EventMonitorController {
             String suffix = "__" + athlete.getId();
             Double resultValue = parseOptionalDouble(params.get("result" + suffix));
             String unit = params.get("unit" + suffix);
-            Double time = parseTime(params, suffix);
+            Double time = parseTime(params, suffix, "time");
+            Double secondaryTime = parseTime(params, suffix, "secondaryTime");
 
             EventResult eventResult = eventResultRepository
                     .findByAthleteAndCompetitionAndEventName(athlete, competition, event.getEventName())
                     .orElseGet(EventResult::new);
-            if (eventResult.getId() == null && resultValue == null && time == null) {
+            if (eventResult.getId() == null && resultValue == null && time == null && secondaryTime == null) {
                 continue;
             }
 
@@ -214,13 +215,19 @@ public class EventMonitorController {
             eventResult.setResult(resultValue);
             eventResult.setUnit(resolveUnit(event, unit));
             eventResult.setTime(time);
+            eventResult.setSecondaryTime(secondaryTime);
             eventResultRepository.save(eventResult);
         }
     }
 
-    private Double parseTime(Map<String, String> params, String suffix) {
-        Double minutes = parseOptionalDouble(params.get("timeMinutes" + suffix));
-        Double seconds = parseOptionalDouble(params.get("timeSeconds" + suffix));
+    private Double parseTime(Map<String, String> params, String suffix, String prefix) {
+        Double directTime = parseOptionalDouble(params.get(prefix + suffix));
+        if (directTime != null) {
+            return directTime;
+        }
+
+        Double minutes = parseOptionalDouble(params.get(prefix + "Minutes" + suffix));
+        Double seconds = parseOptionalDouble(params.get(prefix + "Seconds" + suffix));
 
         if (minutes == null && seconds == null) {
             return null;
@@ -489,6 +496,9 @@ public class EventMonitorController {
         }
         if (result.getTime() != null) {
             parts.add(formatNumber(result.getTime()) + " sec");
+        }
+        if (result.getSecondaryTime() != null) {
+            parts.add("Secondary " + formatNumber(result.getSecondaryTime()) + " sec");
         }
         return String.join(" / ", parts);
     }

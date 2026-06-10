@@ -170,11 +170,10 @@ public class HomeController {
                 if (result.getTime() != null) {
                     competitor.getTimes().put(result.getEventName(), result.getTime());
                     String timeDisplay = formatResult(result.getTime(), "sec");
-                    String currentDisplay = competitor.getDisplayResults().get(result.getEventName());
-                    competitor.getDisplayResults().put(
-                            result.getEventName(),
-                            currentDisplay == null || currentDisplay.isBlank() ? timeDisplay : currentDisplay + " / " + timeDisplay
-                    );
+                    appendDisplayResult(competitor, result.getEventName(), timeDisplay);
+                }
+                if (result.getSecondaryTime() != null) {
+                    appendDisplayResult(competitor, result.getEventName(), "Secondary " + formatResult(result.getSecondaryTime(), "sec"));
                 }
             }
 
@@ -182,6 +181,14 @@ public class HomeController {
         }
 
         return competitors;
+    }
+
+    private void appendDisplayResult(Competitor competitor, String eventName, String displayValue) {
+        String currentDisplay = competitor.getDisplayResults().get(eventName);
+        competitor.getDisplayResults().put(
+                eventName,
+                currentDisplay == null || currentDisplay.isBlank() ? displayValue : currentDisplay + " / " + displayValue
+        );
     }
 
     private String formatResult(Double value, String unit) {

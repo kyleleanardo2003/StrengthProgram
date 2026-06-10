@@ -54,6 +54,20 @@ public class EventMonitorRow {
         return result.getTime() % 60;
     }
 
+    public Double getSecondaryTimeMinutes() {
+        if (result == null || result.getSecondaryTime() == null) {
+            return null;
+        }
+        return Math.floor(result.getSecondaryTime() / 60);
+    }
+
+    public Double getSecondaryTimeSeconds() {
+        if (result == null || result.getSecondaryTime() == null) {
+            return null;
+        }
+        return result.getSecondaryTime() % 60;
+    }
+
     public String getScoreDisplay() {
         return scoreDisplay;
     }

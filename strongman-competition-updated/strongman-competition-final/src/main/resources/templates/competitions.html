@@ -41,6 +41,24 @@
             display: inline-block;
             margin: 0 6px 4px;
         }
+        .competition-name-cell {
+            align-items: center;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        .competition-name-link {
+            color: #fff !important;
+            font-weight: 800;
+            text-decoration: none;
+        }
+        .competition-name-link:hover {
+            text-decoration: underline;
+        }
+        .edit-competition-link {
+            font-size: 11px;
+            padding: 6px 8px;
+        }
         .competition-edit {
             margin-top: 8px;
         }
@@ -105,39 +123,25 @@
             <tr>
                 <th>Name</th>
                 <th>Date</th>
-                <th>Location</th>
                 <th th:if="${canEditCompetitions}">Actions</th>
             </tr>
             </thead>
             <tbody>
             <tr th:if="${liveCompetitions == null || liveCompetitions.isEmpty()}">
-                <td th:colspan="${canEditCompetitions ? 4 : 3}">No live competitions right now.</td>
+                <td th:colspan="${canEditCompetitions ? 3 : 2}">No live competitions right now.</td>
             </tr>
             <tr th:each="savedCompetition : ${liveCompetitions}">
                 <td>
-                    <span th:text="${savedCompetition.name}">Competition</span>
-                    <div class="open-links">
-                        <a th:href="@{/results(competitionId=${savedCompetition.id})}">Results</a>
-                        <a th:if="${canEditCompetitions}" th:href="@{/organizer(competitionId=${savedCompetition.id})}">Organizer</a>
+                    <div class="competition-name-cell">
+                        <a class="competition-name-link"
+                           th:href="@{/results(competitionId=${savedCompetition.id})}"
+                           th:text="${savedCompetition.name}">Competition</a>
+                        <a class="hub-button edit-competition-link"
+                           th:if="${canEditCompetitions}"
+                           th:href="@{/organizer(competitionId=${savedCompetition.id})}">Edit</a>
                     </div>
-                    <details class="competition-edit" th:if="${canEditCompetitions}">
-                        <summary>Edit</summary>
-                        <form th:action="@{/competitions/{id}(id=${savedCompetition.id})}" method="post">
-                            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                            <input type="text" name="name" th:value="${savedCompetition.name}" required />
-                            <input type="date" name="competitionDate" th:value="${savedCompetition.competitionDate}" />
-                            <input type="text" name="location" th:value="${savedCompetition.location}" />
-                            <select name="status">
-                                <option value="SETUP" th:selected="${savedCompetition.status == 'SETUP'}">Setup</option>
-                                <option value="LIVE" th:selected="${savedCompetition.status == 'LIVE'}">Live</option>
-                                <option value="COMPLETE" th:selected="${savedCompetition.status == 'COMPLETE'}">Complete</option>
-                            </select>
-                            <button type="submit">Update Competition</button>
-                        </form>
-                    </details>
                 </td>
                 <td th:text="${savedCompetition.competitionDate}">Date</td>
-                <td th:text="${savedCompetition.location}">Location</td>
                 <td class="row-actions" th:if="${canEditCompetitions}">
                     <form th:action="@{/competitions/{id}/delete(id=${savedCompetition.id})}" method="post"
                           onsubmit="return confirm('Delete this competition and all of its athletes, events, and scores?');">
@@ -157,39 +161,25 @@
             <tr>
                 <th>Name</th>
                 <th>Date</th>
-                <th>Location</th>
                 <th th:if="${canEditCompetitions}">Actions</th>
             </tr>
             </thead>
             <tbody>
             <tr th:if="${upcomingCompetitions == null || upcomingCompetitions.isEmpty()}">
-                <td th:colspan="${canEditCompetitions ? 4 : 3}">No upcoming competitions have been created yet.</td>
+                <td th:colspan="${canEditCompetitions ? 3 : 2}">No upcoming competitions have been created yet.</td>
             </tr>
             <tr th:each="savedCompetition : ${upcomingCompetitions}">
                 <td>
-                    <span th:text="${savedCompetition.name}">Competition</span>
-                    <div class="open-links">
-                        <a th:href="@{/results(competitionId=${savedCompetition.id})}">Results</a>
-                        <a th:if="${canEditCompetitions}" th:href="@{/organizer(competitionId=${savedCompetition.id})}">Organizer</a>
+                    <div class="competition-name-cell">
+                        <a class="competition-name-link"
+                           th:href="@{/results(competitionId=${savedCompetition.id})}"
+                           th:text="${savedCompetition.name}">Competition</a>
+                        <a class="hub-button edit-competition-link"
+                           th:if="${canEditCompetitions}"
+                           th:href="@{/organizer(competitionId=${savedCompetition.id})}">Edit</a>
                     </div>
-                    <details class="competition-edit" th:if="${canEditCompetitions}">
-                        <summary>Edit</summary>
-                        <form th:action="@{/competitions/{id}(id=${savedCompetition.id})}" method="post">
-                            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                            <input type="text" name="name" th:value="${savedCompetition.name}" required />
-                            <input type="date" name="competitionDate" th:value="${savedCompetition.competitionDate}" />
-                            <input type="text" name="location" th:value="${savedCompetition.location}" />
-                            <select name="status">
-                                <option value="SETUP" th:selected="${savedCompetition.status == 'SETUP'}">Setup</option>
-                                <option value="LIVE" th:selected="${savedCompetition.status == 'LIVE'}">Live</option>
-                                <option value="COMPLETE" th:selected="${savedCompetition.status == 'COMPLETE'}">Complete</option>
-                            </select>
-                            <button type="submit">Update Competition</button>
-                        </form>
-                    </details>
                 </td>
                 <td th:text="${savedCompetition.competitionDate}">Date</td>
-                <td th:text="${savedCompetition.location}">Location</td>
                 <td class="row-actions" th:if="${canEditCompetitions}">
                     <form th:action="@{/competitions/{id}/delete(id=${savedCompetition.id})}" method="post"
                           onsubmit="return confirm('Delete this competition and all of its athletes, events, and scores?');">
@@ -209,39 +199,25 @@
             <tr>
                 <th>Name</th>
                 <th>Date</th>
-                <th>Location</th>
                 <th th:if="${canEditCompetitions}">Actions</th>
             </tr>
             </thead>
             <tbody>
             <tr th:if="${pastCompetitions == null || pastCompetitions.isEmpty()}">
-                <td th:colspan="${canEditCompetitions ? 4 : 3}">No past competitions have been archived yet.</td>
+                <td th:colspan="${canEditCompetitions ? 3 : 2}">No past competitions have been archived yet.</td>
             </tr>
             <tr th:each="savedCompetition : ${pastCompetitions}">
                 <td>
-                    <span th:text="${savedCompetition.name}">Competition</span>
-                    <div class="open-links">
-                        <a th:href="@{/results(competitionId=${savedCompetition.id})}">Results</a>
-                        <a th:if="${canEditCompetitions}" th:href="@{/organizer(competitionId=${savedCompetition.id})}">Organizer</a>
+                    <div class="competition-name-cell">
+                        <a class="competition-name-link"
+                           th:href="@{/results(competitionId=${savedCompetition.id})}"
+                           th:text="${savedCompetition.name}">Competition</a>
+                        <a class="hub-button edit-competition-link"
+                           th:if="${canEditCompetitions}"
+                           th:href="@{/organizer(competitionId=${savedCompetition.id})}">Edit</a>
                     </div>
-                    <details class="competition-edit" th:if="${canEditCompetitions}">
-                        <summary>Edit</summary>
-                        <form th:action="@{/competitions/{id}(id=${savedCompetition.id})}" method="post">
-                            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                            <input type="text" name="name" th:value="${savedCompetition.name}" required />
-                            <input type="date" name="competitionDate" th:value="${savedCompetition.competitionDate}" />
-                            <input type="text" name="location" th:value="${savedCompetition.location}" />
-                            <select name="status">
-                                <option value="SETUP" th:selected="${savedCompetition.status == 'SETUP'}">Setup</option>
-                                <option value="LIVE" th:selected="${savedCompetition.status == 'LIVE'}">Live</option>
-                                <option value="COMPLETE" th:selected="${savedCompetition.status == 'COMPLETE'}">Complete</option>
-                            </select>
-                            <button type="submit">Update Competition</button>
-                        </form>
-                    </details>
                 </td>
                 <td th:text="${savedCompetition.competitionDate}">Date</td>
-                <td th:text="${savedCompetition.location}">Location</td>
                 <td class="row-actions" th:if="${canEditCompetitions}">
                     <form th:action="@{/competitions/{id}/delete(id=${savedCompetition.id})}" method="post"
                           onsubmit="return confirm('Delete this competition and all of its athletes, events, and scores?');">
