@@ -181,9 +181,26 @@ public class DataManagementController {
         athlete.setCompetition(competition);
         athlete.setName(name);
         athlete.setMembership(membership);
+        athlete.setGender(inferGender(division));
         athlete.setBodyweight(bodyweight);
         athlete.setDivision(division);
         return athleteRepository.save(athlete);
+    }
+
+    private String inferGender(String division) {
+        if (division == null) {
+            return "";
+        }
+        if (division.startsWith("Women")) {
+            return "Women";
+        }
+        if (division.startsWith("Men")) {
+            return "Men";
+        }
+        if (division.contains("Adaptive")) {
+            return "Adaptive";
+        }
+        return "";
     }
 
     private void saveResult(Competition competition, Athlete athlete, String eventName, Double result, String unit, Double time) {

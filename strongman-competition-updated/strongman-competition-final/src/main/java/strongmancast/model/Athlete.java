@@ -11,6 +11,7 @@ public class Athlete {
 
     private String name;
     private String membership;
+    private String gender;
     private double bodyweight;
     private String division;
     private String eventGroup;
@@ -47,6 +48,14 @@ public class Athlete {
 
     public void setMembership(String membership) {
         this.membership = membership;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
     }
 
     public double getBodyweight() {

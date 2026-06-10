@@ -67,8 +67,9 @@
         <tr>
             <th>Name</th>
             <th>Membership</th>
+            <th>Class Group</th>
             <th>Body Weight (kg)</th>
-            <th>Division</th>
+            <th>Class Override</th>
             <th>Event Group</th>
             <th>Actions</th>
         </tr>
@@ -77,6 +78,7 @@
         <tr th:each="athlete : ${athletes}">
             <td th:text="${athlete.name}">Name</td>
             <td th:text="${athlete.membership}">Membership</td>
+            <td th:text="${athlete.gender}">Class Group</td>
             <td th:text="${athlete.bodyweight}">0.0</td>
             <td th:text="${athlete.division}">Division</td>
             <td th:text="${athlete.eventGroup}">Event Group</td>

@@ -9,6 +9,7 @@ import strongmancast.repository.AthleteRepository;
 import strongmancast.repository.CompetitionEventRepository;
 import strongmancast.repository.EventResultRepository;
 import strongmancast.service.CompetitionContextService;
+import strongmancast.service.WeightClassService;
 import org.springframework.stereotype.Controller;
 import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
@@ -35,17 +36,20 @@ public class EventMonitorController {
     private final AthleteRepository athleteRepository;
     private final EventResultRepository eventResultRepository;
     private final CompetitionContextService competitionContextService;
+    private final WeightClassService weightClassService;
 
     public EventMonitorController(
             CompetitionEventRepository competitionEventRepository,
             AthleteRepository athleteRepository,
             EventResultRepository eventResultRepository,
-            CompetitionContextService competitionContextService
+            CompetitionContextService competitionContextService,
+            WeightClassService weightClassService
     ) {
         this.competitionEventRepository = competitionEventRepository;
         this.athleteRepository = athleteRepository;
         this.eventResultRepository = eventResultRepository;
         this.competitionContextService = competitionContextService;
+        this.weightClassService = weightClassService;
     }
 
     @GetMapping("/events/{id}/monitor")
@@ -113,8 +117,10 @@ public class EventMonitorController {
         int activeSlots = Integer.valueOf(2).equals(event.getActiveSlots()) ? 2 : 1;
         Set<Long> activeAthleteIds = new LinkedHashSet<>();
         Set<Long> nextInHoleAthleteIds = new LinkedHashSet<>();
+        Set<Long> nextToHoleAthleteIds = new LinkedHashSet<>();
+        List<Athlete> runOrderAthletes = orderAthletesForEvent(event, competition, athletes);
 
-        for (Athlete athlete : athletes) {
+        for (Athlete athlete : runOrderAthletes) {
             if (scoredAthleteIds.contains(athlete.getId())) {
                 continue;
             }
@@ -123,27 +129,34 @@ public class EventMonitorController {
                 activeAthleteIds.add(athlete.getId());
             } else if (nextInHoleAthleteIds.size() < activeSlots) {
                 nextInHoleAthleteIds.add(athlete.getId());
+            } else if (nextToHoleAthleteIds.size() < activeSlots) {
+                nextToHoleAthleteIds.add(athlete.getId());
             } else {
                 break;
             }
         }
 
         Map<Long, Integer> divisionPlaces = calculateDivisionPlaces(event, athletes, resultsByAthleteId);
+        Map<Long, Integer> overallPlaces = calculateOverallPlaces(competition, athletes);
         Map<String, List<EventMonitorRow>> rowsByGroup = new LinkedHashMap<>();
-        for (Athlete athlete : athletes) {
+        for (Athlete athlete : runOrderAthletes) {
             String status = "";
             if (activeAthleteIds.contains(athlete.getId())) {
                 status = "ON_STAGE";
             } else if (nextInHoleAthleteIds.contains(athlete.getId())) {
                 status = "NEXT_IN_HOLE";
+            } else if (nextToHoleAthleteIds.contains(athlete.getId())) {
+                status = "NEXT_TO_HOLE";
             }
 
             EventResult result = resultsByAthleteId.get(athlete.getId());
             EventMonitorRow row = new EventMonitorRow(
                     athlete,
                     result,
+                    divisionFor(athlete),
                     formatScore(result),
                     divisionPlaces.get(athlete.getId()),
+                    overallPlaces.get(athlete.getId()),
                     status
             );
             rowsByGroup.computeIfAbsent(eventGroupFor(athlete), key -> new ArrayList<>()).add(row);
@@ -164,6 +177,7 @@ public class EventMonitorController {
         model.addAttribute("rowsByGroup", rowsByGroup);
         model.addAttribute("activeAthleteIds", activeAthleteIds);
         model.addAttribute("nextInHoleAthleteIds", nextInHoleAthleteIds);
+        model.addAttribute("nextToHoleAthleteIds", nextToHoleAthleteIds);
         model.addAttribute("scoredAthleteIds", scoredAthleteIds);
         model.addAttribute("competitionId", competition == null ? null : competition.getId());
         if (competition != null) {
@@ -252,10 +266,119 @@ public class EventMonitorController {
         if (row.isNextInHole()) {
             return 1;
         }
-        if (row.getScoreDisplay() == null || row.getScoreDisplay().isBlank()) {
+        if (row.isNextToHole()) {
             return 2;
         }
-        return 3;
+        if (row.getScoreDisplay() == null || row.getScoreDisplay().isBlank()) {
+            return 3;
+        }
+        return 4;
+    }
+
+    private List<Athlete> orderAthletesForEvent(CompetitionEvent event, Competition competition, List<Athlete> athletes) {
+        if (competition == null) {
+            return athletes;
+        }
+
+        List<CompetitionEvent> configuredEvents = competitionEventRepository.findByCompetitionOrderBySortOrderAscIdAsc(competition);
+        CompetitionEvent previousEvent = null;
+        for (int index = 0; index < configuredEvents.size(); index++) {
+            if (configuredEvents.get(index).getId().equals(event.getId())) {
+                if (index > 0) {
+                    previousEvent = configuredEvents.get(index - 1);
+                }
+                break;
+            }
+        }
+
+        if (previousEvent == null) {
+            return athletes;
+        }
+
+        CompetitionEvent rankingEvent = previousEvent;
+        Map<Long, EventResult> previousResultsByAthleteId = eventResultRepository.findByCompetition(competition).stream()
+                .filter(result -> rankingEvent.getEventName().equals(result.getEventName()))
+                .collect(Collectors.toMap(result -> result.getAthlete().getId(), Function.identity(), (first, second) -> first));
+        Map<Long, Integer> previousPlaces = calculateDivisionPlaces(rankingEvent, athletes, previousResultsByAthleteId);
+
+        return athletes.stream()
+                .sorted(Comparator
+                        .comparing(this::divisionFor)
+                        .thenComparing(athlete -> previousPlaces.getOrDefault(athlete.getId(), Integer.MAX_VALUE))
+                        .thenComparing(Athlete::getName, Comparator.nullsLast(String::compareToIgnoreCase)))
+                .toList();
+    }
+
+    private Map<Long, Integer> calculateOverallPlaces(Competition competition, List<Athlete> athletes) {
+        Map<Long, Integer> places = new LinkedHashMap<>();
+        if (competition == null) {
+            return places;
+        }
+
+        List<CompetitionEvent> configuredEvents = competitionEventRepository.findByCompetitionOrderBySortOrderAscIdAsc(competition);
+        Map<String, List<Athlete>> athletesByDivision = new LinkedHashMap<>();
+        for (Athlete athlete : athletes) {
+            athletesByDivision.computeIfAbsent(divisionFor(athlete), key -> new ArrayList<>()).add(athlete);
+        }
+
+        Map<String, Map<Long, EventResult>> resultsByEventName = new LinkedHashMap<>();
+        for (EventResult result : eventResultRepository.findByCompetition(competition)) {
+            resultsByEventName
+                    .computeIfAbsent(result.getEventName(), key -> new LinkedHashMap<>())
+                    .put(result.getAthlete().getId(), result);
+        }
+
+        for (List<Athlete> divisionAthletes : athletesByDivision.values()) {
+            Map<Long, Double> totals = new LinkedHashMap<>();
+            for (Athlete athlete : divisionAthletes) {
+                totals.put(athlete.getId(), 0.0);
+            }
+
+            for (CompetitionEvent configuredEvent : configuredEvents) {
+                Map<Long, EventResult> eventResults = resultsByEventName.getOrDefault(configuredEvent.getEventName(), Map.of());
+                List<Athlete> scoredAthletes = divisionAthletes.stream()
+                        .filter(athlete -> {
+                            EventResult result = eventResults.get(athlete.getId());
+                            return result != null && hasScore(result);
+                        })
+                        .sorted((first, second) -> compareResults(configuredEvent, eventResults.get(first.getId()), eventResults.get(second.getId())))
+                        .toList();
+
+                for (int index = 0; index < scoredAthletes.size(); ) {
+                    int tieEnd = index;
+                    while (tieEnd + 1 < scoredAthletes.size()
+                            && sameResult(configuredEvent, eventResults.get(scoredAthletes.get(index).getId()), eventResults.get(scoredAthletes.get(tieEnd + 1).getId()))) {
+                        tieEnd++;
+                    }
+
+                    double sumPoints = 0.0;
+                    for (int placeIndex = index; placeIndex <= tieEnd; placeIndex++) {
+                        sumPoints += divisionAthletes.size() - placeIndex;
+                    }
+                    double averagePoints = sumPoints / (tieEnd - index + 1);
+
+                    for (int placeIndex = index; placeIndex <= tieEnd; placeIndex++) {
+                        Athlete athlete = scoredAthletes.get(placeIndex);
+                        totals.put(athlete.getId(), totals.get(athlete.getId()) + averagePoints);
+                    }
+
+                    index = tieEnd + 1;
+                }
+            }
+
+            List<Athlete> sortedByTotal = divisionAthletes.stream()
+                    .sorted((first, second) -> Double.compare(totals.get(second.getId()), totals.get(first.getId())))
+                    .toList();
+            for (int index = 0; index < sortedByTotal.size(); index++) {
+                if (index > 0 && Double.compare(totals.get(sortedByTotal.get(index - 1).getId()), totals.get(sortedByTotal.get(index).getId())) == 0) {
+                    places.put(sortedByTotal.get(index).getId(), places.get(sortedByTotal.get(index - 1).getId()));
+                } else {
+                    places.put(sortedByTotal.get(index).getId(), index + 1);
+                }
+            }
+        }
+
+        return places;
     }
 
     private Map<Long, Integer> calculateDivisionPlaces(
@@ -382,6 +505,6 @@ public class EventMonitorController {
     }
 
     private String divisionFor(Athlete athlete) {
-        return athlete.getDivision() == null || athlete.getDivision().isBlank() ? "Unassigned" : athlete.getDivision();
+        return weightClassService.resolveDivision(athlete);
     }
 }

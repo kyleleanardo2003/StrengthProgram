@@ -10,6 +10,7 @@ import strongmancast.repository.AthleteRepository;
 import strongmancast.repository.CompetitionEventRepository;
 import strongmancast.repository.EventResultRepository;
 import strongmancast.service.CompetitionContextService;
+import strongmancast.service.WeightClassService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,17 +27,20 @@ public class HomeController {
     private final EventResultRepository eventResultRepository;
     private final CompetitionEventRepository competitionEventRepository;
     private final CompetitionContextService competitionContextService;
+    private final WeightClassService weightClassService;
 
     public HomeController(
             AthleteRepository athleteRepository,
             EventResultRepository eventResultRepository,
             CompetitionEventRepository competitionEventRepository,
-            CompetitionContextService competitionContextService
+            CompetitionContextService competitionContextService,
+            WeightClassService weightClassService
     ) {
         this.athleteRepository = athleteRepository;
         this.eventResultRepository = eventResultRepository;
         this.competitionEventRepository = competitionEventRepository;
         this.competitionContextService = competitionContextService;
+        this.weightClassService = weightClassService;
     }
 
     @GetMapping("/")
@@ -194,7 +198,7 @@ public class HomeController {
     }
 
     private String displayDivision(Athlete athlete) {
-        return athlete.getDivision() == null || athlete.getDivision().isBlank() ? "Unassigned" : athlete.getDivision();
+        return weightClassService.resolveDivision(athlete);
     }
 
     private void calculateScores(Competition competition, Map<String, List<Competitor>> competitorsByDivision) {

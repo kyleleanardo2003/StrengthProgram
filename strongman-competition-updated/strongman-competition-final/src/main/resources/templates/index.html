@@ -37,6 +37,16 @@
         .actions a {
             margin-right: 16px;
         }
+        .event-button-row {
+            align-items: center;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 18px 0 24px;
+        }
+        .event-button-row a {
+            margin-right: 0;
+        }
     </style>
     <link rel="stylesheet" th:href="@{/app.css}">
 </head>
@@ -52,6 +62,14 @@
 <p th:if="${error}" th:text="${error}">Error</p>
 <p th:if="${divisions == null || divisions.isEmpty()}">No athletes have been added yet.</p>
 
+<div class="event-button-row"
+     th:if="${configuredEvents != null && !configuredEvents.isEmpty()}">
+    <a class="hub-button"
+       th:each="event : ${configuredEvents}"
+       th:href="@{/events/{id}/live(id=${event.id})}"
+       th:text="${event.eventName}">Event</a>
+</div>
+
 <div th:each="division : ${divisions}">
     <h2 th:text="${division.key}">Division Name</h2>
     <table>
@@ -60,9 +78,7 @@
             <th rowspan="2">Name</th>
             <th rowspan="2">Body Weight (kg)</th>
             <th rowspan="2">Place</th>
-            <th th:each="event : ${configuredEvents}" colspan="2">
-                <a th:href="@{/events/{id}/live(id=${event.id})}" th:text="${event.eventName}">Event</a>
-            </th>
+            <th th:each="event : ${configuredEvents}" colspan="2" th:text="${event.eventName}">Event</th>
             <th rowspan="2">Total Points</th>
         </tr>
         <tr>

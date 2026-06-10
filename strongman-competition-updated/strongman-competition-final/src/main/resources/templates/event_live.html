@@ -34,6 +34,10 @@
             background: #3a3215;
             outline: 3px solid #d1b255;
         }
+        tr.is-next-to-hole {
+            background: #223347;
+            outline: 3px solid #69b7ff;
+        }
         .status-pill {
             color: #78d381;
             font-weight: 800;
@@ -41,6 +45,9 @@
         }
         .status-pill.is-next {
             color: #f0cf6a;
+        }
+        .status-pill.is-next-to-hole {
+            color: #69b7ff;
         }
         .group-heading {
             margin: 30px 0 10px;
@@ -64,26 +71,28 @@
         <thead>
         <tr>
             <th>Name</th>
-            <th>Division</th>
             <th>Body Weight (kg)</th>
+            <th>Event Place</th>
             <th>Score</th>
-            <th>Division Place</th>
+            <th>Overall Place</th>
             <th>Status</th>
         </tr>
         </thead>
         <tbody>
         <tr th:each="row : ${groupRows.value}"
-            th:classappend="${row.onStage} ? 'is-active' : (${row.nextInHole} ? 'is-next' : '')">
+            th:classappend="${row.onStage} ? 'is-active' : (${row.nextInHole} ? 'is-next' : (${row.nextToHole} ? 'is-next-to-hole' : ''))">
             <td th:text="${row.athlete.name}">Name</td>
-            <td th:text="${row.athlete.division}">Division</td>
             <td th:text="${row.athlete.bodyweight}">0</td>
-            <td th:text="${row.scoreDisplay}">Score</td>
             <td th:text="${row.divisionPlace}">Place</td>
+            <td th:text="${row.scoreDisplay}">Score</td>
+            <td th:text="${row.overallPlace}">Overall</td>
             <td>
                 <span class="status-pill"
                       th:if="${row.onStage}">On Stage</span>
                 <span class="status-pill is-next"
-                      th:if="${row.nextInHole}">Next In The Hole</span>
+                      th:if="${row.nextInHole}">Hole</span>
+                <span class="status-pill is-next-to-hole"
+                      th:if="${row.nextToHole}">Next In The Hole</span>
             </td>
         </tr>
         </tbody>

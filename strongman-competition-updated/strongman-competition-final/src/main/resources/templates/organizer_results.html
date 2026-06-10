@@ -94,6 +94,16 @@
         .score-reset-form button:hover {
             background-color: #7f2424;
         }
+        .event-button-row {
+            align-items: center;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 18px 0 8px;
+        }
+        .event-button-row a {
+            margin-right: 0;
+        }
         .competition-title-form {
             align-items: center;
             display: grid;
@@ -249,6 +259,7 @@
     <a class="hub-button" th:href="@{/athletes/new(competitionId=${competitionId})}">Add Athlete</a>
     <a class="hub-button" th:href="@{/athletes(competitionId=${competitionId})}">Manage Athletes</a>
     <a class="hub-button" th:href="@{/results(competitionId=${competitionId})}">Public Results</a>
+    <a class="hub-button" th:href="@{/backup/live.xlsx(competitionId=${competitionId})}">Download Excel Backup</a>
 </p>
 
 <form th:if="${currentCompetition != null && currentCompetition.status != 'LIVE'}"
@@ -274,6 +285,14 @@
 <p th:if="${error}" th:text="${error}">Error</p>
 <p class="empty-state" th:if="${divisions == null || divisions.isEmpty()}">No athletes have been added yet.</p>
 <p class="empty-state" th:if="${configuredEvents == null || configuredEvents.isEmpty()}">No events have been configured yet.</p>
+
+<div class="event-button-row"
+     th:if="${configuredEvents != null && !configuredEvents.isEmpty()}">
+    <a class="hub-button"
+       th:each="event : ${configuredEvents}"
+       th:href="@{/events/{id}/monitor(id=${event.id})}"
+       th:text="${event.eventName}">Event</a>
+</div>
 
 <form class="score-reset-form"
       th:if="${configuredEvents != null && !configuredEvents.isEmpty() && scoreRowsByDivision != null && !scoreRowsByDivision.isEmpty()}"
@@ -307,12 +326,11 @@
                     <th class="small-col">Place</th>
                     <th class="athlete-col">Athlete</th>
                     <th class="medium-col">Membership</th>
+                    <th class="medium-col">Class Group</th>
                     <th class="small-col">Body Wt (kg)</th>
-                    <th class="medium-col">Division</th>
+                    <th class="medium-col">Class Override</th>
                     <th class="medium-col event-group-column">Event Group</th>
-                    <th class="event-col" th:each="event : ${configuredEvents}">
-                        <a th:href="@{/events/{id}/monitor(id=${event.id})}" th:text="${event.eventName}">Event</a>
-                    </th>
+                    <th class="event-col" th:each="event : ${configuredEvents}" th:text="${event.eventName}">Event</th>
                     <th class="small-col">Total</th>
                 </tr>
                 </thead>
@@ -331,6 +349,14 @@
                                th:name="|membership__${row.athlete.id}|"
                                th:value="${row.athlete.membership}" />
                     </td>
+                    <td class="medium-col">
+                        <select th:name="|gender__${row.athlete.id}|">
+                            <option value="" th:selected="${row.athlete.gender == null || row.athlete.gender.isBlank()}">Choose</option>
+                            <option value="Men" th:selected="${row.athlete.gender == 'Men'}">Men</option>
+                            <option value="Women" th:selected="${row.athlete.gender == 'Women'}">Women</option>
+                            <option value="Adaptive" th:selected="${row.athlete.gender == 'Adaptive'}">Adaptive</option>
+                        </select>
+                    </td>
                     <td class="small-col">
                         <input type="number" step="0.1"
                                th:name="|bodyweight__${row.athlete.id}|"
@@ -339,7 +365,8 @@
                     <td class="medium-col">
                         <input type="text"
                                th:name="|division__${row.athlete.id}|"
-                               th:value="${row.athlete.division}" required />
+                               th:value="${row.athlete.division}"
+                               placeholder="Auto if blank" />
                     </td>
                     <td class="medium-col event-group-column">
                         <input type="text"

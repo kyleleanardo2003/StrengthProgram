@@ -55,6 +55,10 @@
             background: #3a3215;
             outline: 2px solid #d1b255;
         }
+        tr.is-next-to-hole {
+            background: #223347;
+            outline: 2px solid #69b7ff;
+        }
         .status-on-stage {
             color: #78d381;
             font-weight: 800;
@@ -62,6 +66,11 @@
         }
         .status-next {
             color: #f0cf6a;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+        .status-next-to-hole {
+            color: #69b7ff;
             font-weight: 800;
             text-transform: uppercase;
         }
@@ -133,7 +142,7 @@
             </div>
             <button type="submit">Update Monitor</button>
         </form>
-        <p>The first unscored competitor is on stage. After scores are entered, the highlight moves to the next unscored competitor automatically.</p>
+        <p>The first unscored competitor is on stage. The next group is in the hole, and the following group is next in the hole.</p>
     </section>
 
     <section>
@@ -153,19 +162,19 @@
             <thead>
             <tr>
                 <th>Name</th>
-                <th>Division</th>
                 <th>Body Weight (kg)</th>
+                <th>Event Place</th>
                 <th>Score</th>
-                <th>Division Place</th>
+                <th>Overall Place</th>
                 <th>Status</th>
             </tr>
             </thead>
             <tbody>
             <tr th:each="row : ${groupRows.value}"
-                th:classappend="${row.onStage} ? 'is-active' : (${row.nextInHole} ? 'is-next' : '')">
+                th:classappend="${row.onStage} ? 'is-active' : (${row.nextInHole} ? 'is-next' : (${row.nextToHole} ? 'is-next-to-hole' : ''))">
                 <td th:text="${row.athlete.name}">Name</td>
-                <td th:text="${row.athlete.division}">Division</td>
                 <td th:text="${row.athlete.bodyweight}">0</td>
+                <td th:text="${row.divisionPlace}">Place</td>
                 <td>
                     <div class="score-cell">
                         <input type="number" step="0.01"
@@ -196,10 +205,11 @@
                         </div>
                     </div>
                 </td>
-                <td th:text="${row.divisionPlace}">Place</td>
+                <td th:text="${row.overallPlace}">Overall</td>
                 <td>
                     <span class="status-on-stage" th:if="${row.onStage}">On Stage</span>
-                    <span class="status-next" th:if="${row.nextInHole}">Next In The Hole</span>
+                    <span class="status-next" th:if="${row.nextInHole}">Hole</span>
+                    <span class="status-next-to-hole" th:if="${row.nextToHole}">Next In The Hole</span>
                 </td>
             </tr>
             </tbody>

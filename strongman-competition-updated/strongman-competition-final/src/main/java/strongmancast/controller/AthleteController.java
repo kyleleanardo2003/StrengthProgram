@@ -55,6 +55,7 @@ public class AthleteController {
         Athlete athlete = athleteRepository.findById(id).orElseThrow();
         athlete.setName(updatedAthlete.getName());
         athlete.setMembership(updatedAthlete.getMembership());
+        athlete.setGender(updatedAthlete.getGender());
         athlete.setBodyweight(updatedAthlete.getBodyweight());
         athlete.setDivision(updatedAthlete.getDivision());
         athlete.setEventGroup(updatedAthlete.getEventGroup());

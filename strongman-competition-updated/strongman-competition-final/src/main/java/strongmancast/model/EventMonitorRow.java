@@ -4,15 +4,19 @@ public class EventMonitorRow {
 
     private final Athlete athlete;
     private final EventResult result;
+    private final String divisionDisplay;
     private final String scoreDisplay;
     private final Integer divisionPlace;
+    private final Integer overallPlace;
     private final String status;
 
-    public EventMonitorRow(Athlete athlete, EventResult result, String scoreDisplay, Integer divisionPlace, String status) {
+    public EventMonitorRow(Athlete athlete, EventResult result, String divisionDisplay, String scoreDisplay, Integer divisionPlace, Integer overallPlace, String status) {
         this.athlete = athlete;
         this.result = result;
+        this.divisionDisplay = divisionDisplay;
         this.scoreDisplay = scoreDisplay;
         this.divisionPlace = divisionPlace;
+        this.overallPlace = overallPlace;
         this.status = status;
     }
 
@@ -22,6 +26,10 @@ public class EventMonitorRow {
 
     public EventResult getResult() {
         return result;
+    }
+
+    public String getDivisionDisplay() {
+        return divisionDisplay;
     }
 
     public Double getResultValue() {
@@ -54,6 +62,10 @@ public class EventMonitorRow {
         return divisionPlace;
     }
 
+    public Integer getOverallPlace() {
+        return overallPlace;
+    }
+
     public String getStatus() {
         return status;
     }
@@ -64,5 +76,9 @@ public class EventMonitorRow {
 
     public boolean isNextInHole() {
         return "NEXT_IN_HOLE".equals(status);
+    }
+
+    public boolean isNextToHole() {
+        return "NEXT_TO_HOLE".equals(status);
     }
 }
