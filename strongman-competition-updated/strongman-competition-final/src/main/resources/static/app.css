@@ -23,10 +23,17 @@ table {
 
 th, td {
     border-color: #777 !important;
+    text-align: center !important;
+    vertical-align: middle !important;
 }
 
 th {
     background: #1b1b1b !important;
+}
+
+td input,
+td select {
+    text-align: center !important;
 }
 
 .app-topbar {
