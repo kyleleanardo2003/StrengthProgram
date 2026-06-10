@@ -56,6 +56,18 @@
             justify-content: space-between;
             margin: 18px 0;
         }
+        .toolbar-actions {
+            align-items: center;
+            display: flex;
+            gap: 12px;
+        }
+        .secondary-button {
+            background-color: #4d4d4d;
+            font-weight: 700;
+        }
+        .secondary-button:hover {
+            background-color: #666;
+        }
         .autosave-status {
             color: #9fb1c3;
             font-size: 0.9rem;
@@ -69,6 +81,18 @@
         }
         .autosave-status.is-error {
             color: #ff7b7b;
+        }
+        .score-reset-form {
+            display: flex;
+            justify-content: flex-end;
+            margin: 16px 0 8px;
+        }
+        .score-reset-form button {
+            background-color: #a83232;
+            font-weight: 700;
+        }
+        .score-reset-form button:hover {
+            background-color: #7f2424;
         }
         .competition-title-form {
             align-items: center;
@@ -162,6 +186,12 @@
             min-width: 132px;
             width: 132px;
         }
+        .event-group-column {
+            display: none;
+        }
+        body.show-event-groups .event-group-column {
+            display: table-cell;
+        }
         .event-col {
             min-width: 210px;
             width: 210px;
@@ -245,6 +275,15 @@
 <p class="empty-state" th:if="${divisions == null || divisions.isEmpty()}">No athletes have been added yet.</p>
 <p class="empty-state" th:if="${configuredEvents == null || configuredEvents.isEmpty()}">No events have been configured yet.</p>
 
+<form class="score-reset-form"
+      th:if="${configuredEvents != null && !configuredEvents.isEmpty() && scoreRowsByDivision != null && !scoreRowsByDivision.isEmpty()}"
+      th:action="@{/data/delete-results}" method="post"
+      onsubmit="return confirm('Clear all scores/results for this competition?');">
+    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+    <input type="hidden" name="competitionId" th:value="${competitionId}" />
+    <button type="submit">Clear All Scores</button>
+</form>
+
 <form th:if="${configuredEvents != null && !configuredEvents.isEmpty() && scoreRowsByDivision != null && !scoreRowsByDivision.isEmpty()}"
       id="score-sheet-form"
       th:action="@{/scores/bulk}" method="post">
@@ -253,7 +292,10 @@
     <input type="hidden" id="autosave-url" th:value="@{/scores/bulk/autosave}" />
     <div class="toolbar">
         <span>Edit the sheet values. Changes save automatically.</span>
-        <span id="autosave-status" class="autosave-status" aria-live="polite">All changes saved</span>
+        <div class="toolbar-actions">
+            <button id="event-group-toggle" class="secondary-button" type="button" aria-pressed="false">Show Event Groups</button>
+            <span id="autosave-status" class="autosave-status" aria-live="polite">All changes saved</span>
+        </div>
     </div>
 
     <section th:each="divisionRows : ${scoreRowsByDivision}">
@@ -267,6 +309,7 @@
                     <th class="medium-col">Membership</th>
                     <th class="small-col">Body Wt (kg)</th>
                     <th class="medium-col">Division</th>
+                    <th class="medium-col event-group-column">Event Group</th>
                     <th class="event-col" th:each="event : ${configuredEvents}">
                         <a th:href="@{/events/{id}/monitor(id=${event.id})}" th:text="${event.eventName}">Event</a>
                     </th>
@@ -297,6 +340,11 @@
                         <input type="text"
                                th:name="|division__${row.athlete.id}|"
                                th:value="${row.athlete.division}" required />
+                    </td>
+                    <td class="medium-col event-group-column">
+                        <input type="text"
+                               th:name="|eventGroup__${row.athlete.id}|"
+                               th:value="${row.athlete.eventGroup}" />
                     </td>
                     <td class="event-col" th:each="event : ${configuredEvents}">
                         <div class="event-cell">
@@ -393,6 +441,7 @@
     const scoreSheetForm = document.getElementById('score-sheet-form');
     const autosaveStatus = document.getElementById('autosave-status');
     const autosaveUrl = document.getElementById('autosave-url');
+    const eventGroupToggle = document.getElementById('event-group-toggle');
     let autosaveTimer;
     let autosaveController;
 
@@ -451,6 +500,14 @@
         scoreSheetForm.addEventListener('submit', function (event) {
             event.preventDefault();
             saveSheet();
+        });
+    }
+
+    if (eventGroupToggle) {
+        eventGroupToggle.addEventListener('click', function () {
+            const isShowing = document.body.classList.toggle('show-event-groups');
+            eventGroupToggle.textContent = isShowing ? 'Hide Event Groups' : 'Show Event Groups';
+            eventGroupToggle.setAttribute('aria-pressed', String(isShowing));
         });
     }
 </script>

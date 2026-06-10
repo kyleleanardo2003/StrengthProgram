@@ -60,11 +60,13 @@
             <th rowspan="2">Name</th>
             <th rowspan="2">Body Weight (kg)</th>
             <th rowspan="2">Place</th>
-            <th th:each="event : ${events}" colspan="2" th:text="${event.eventName}">Event</th>
+            <th th:each="event : ${configuredEvents}" colspan="2">
+                <a th:href="@{/events/{id}/live(id=${event.id})}" th:text="${event.eventName}">Event</a>
+            </th>
             <th rowspan="2">Total Points</th>
         </tr>
         <tr>
-            <th:block th:each="event : ${events}">
+            <th:block th:each="event : ${configuredEvents}">
                 <th>Result</th>
                 <th>Points</th>
             </th:block>
@@ -75,7 +77,7 @@
             <td th:text="${competitor.name}">Name</td>
             <td th:text="${competitor.bodyWeight}">0.0</td>
             <td th:text="${competitor.place}">1</td>
-            <th:block th:each="event : ${events}">
+            <th:block th:each="event : ${configuredEvents}">
                 <td th:text="${competitor.displayResults[event.eventName]}">result</td>
                 <td th:text="${competitor.eventPoints[event.eventName]}">points</td>
             </th:block>

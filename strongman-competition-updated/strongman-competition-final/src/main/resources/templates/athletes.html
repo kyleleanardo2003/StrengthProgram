@@ -69,6 +69,7 @@
             <th>Membership</th>
             <th>Body Weight (kg)</th>
             <th>Division</th>
+            <th>Event Group</th>
             <th>Actions</th>
         </tr>
         </thead>
@@ -78,6 +79,7 @@
             <td th:text="${athlete.membership}">Membership</td>
             <td th:text="${athlete.bodyweight}">0.0</td>
             <td th:text="${athlete.division}">Division</td>
+            <td th:text="${athlete.eventGroup}">Event Group</td>
             <td><a th:href="@{/athletes/{id}/edit(id=${athlete.id})}">Edit</a></td>
         </tr>
         </tbody>

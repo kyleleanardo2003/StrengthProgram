@@ -175,6 +175,7 @@ public class ScoreController {
             updatedAthlete.setMembership(params.getOrDefault("membership" + suffix, ""));
             updatedAthlete.setBodyweight(parseDouble(params.get("bodyweight" + suffix)));
             updatedAthlete.setDivision(params.getOrDefault("division" + suffix, ""));
+            updatedAthlete.setEventGroup(params.getOrDefault("eventGroup" + suffix, ""));
             athleteRepository.save(updatedAthlete);
         }
     }

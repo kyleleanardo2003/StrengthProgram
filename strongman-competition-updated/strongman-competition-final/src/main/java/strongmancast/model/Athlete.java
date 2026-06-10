@@ -13,6 +13,7 @@ public class Athlete {
     private String membership;
     private double bodyweight;
     private String division;
+    private String eventGroup;
 
     @ManyToOne
     private Competition competition;
@@ -62,6 +63,14 @@ public class Athlete {
 
     public void setDivision(String division) {
         this.division = division;
+    }
+
+    public String getEventGroup() {
+        return eventGroup;
+    }
+
+    public void setEventGroup(String eventGroup) {
+        this.eventGroup = eventGroup;
     }
 
     public Competition getCompetition() {

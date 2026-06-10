@@ -51,6 +51,61 @@
             background: #153a24;
             outline: 2px solid #55d187;
         }
+        tr.is-next {
+            background: #3a3215;
+            outline: 2px solid #d1b255;
+        }
+        .status-on-stage {
+            color: #78d381;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+        .status-next {
+            color: #f0cf6a;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+        .group-heading {
+            margin: 30px 0 10px;
+        }
+        .score-cell {
+            display: grid;
+            gap: 6px;
+            grid-template-columns: minmax(90px, 1fr) 76px;
+        }
+        .score-cell input,
+        .score-cell select {
+            box-sizing: border-box;
+            padding: 6px;
+            width: 100%;
+        }
+        .time-fields,
+        .score-actions {
+            display: grid;
+            gap: 6px;
+            grid-column: 1 / span 2;
+            grid-template-columns: 1fr 1fr;
+        }
+        .score-actions {
+            color: #9fb1c3;
+            display: block;
+            font-size: 0.88rem;
+            font-weight: 700;
+        }
+        .autosave-status {
+            color: #9fb1c3;
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+        .autosave-status.is-saving {
+            color: #ffd166;
+        }
+        .autosave-status.is-saved {
+            color: #78d381;
+        }
+        .autosave-status.is-error {
+            color: #ff7b7b;
+        }
     </style>
     <link rel="stylesheet" th:href="@{/app.css}">
 </head>
@@ -66,7 +121,7 @@
     </p>
 
     <section class="monitor-panel">
-        <h2>Live Competitor Highlight</h2>
+        <h2>Turn Order Highlight</h2>
         <form class="monitor-grid" th:action="@{/events/{id}/monitor(id=${event.id})}" method="post">
             <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
             <div>
@@ -76,54 +131,150 @@
                     <option value="2" th:selected="${event.activeSlots == 2}">2 competitors</option>
                 </select>
             </div>
-            <div>
-                <label for="activeAthleteOneId">Competitor 1</label>
-                <select id="activeAthleteOneId" name="activeAthleteOneId">
-                    <option value="">None selected</option>
-                    <option th:each="athlete : ${athletes}"
-                            th:value="${athlete.id}"
-                            th:selected="${event.activeAthleteOneId == athlete.id}"
-                            th:text="${athlete.name + ' - ' + athlete.division}">Athlete</option>
-                </select>
-            </div>
-            <div>
-                <label for="activeAthleteTwoId">Competitor 2</label>
-                <select id="activeAthleteTwoId" name="activeAthleteTwoId">
-                    <option value="">None selected</option>
-                    <option th:each="athlete : ${athletes}"
-                            th:value="${athlete.id}"
-                            th:selected="${event.activeAthleteTwoId == athlete.id}"
-                            th:text="${athlete.name + ' - ' + athlete.division}">Athlete</option>
-                </select>
-            </div>
             <button type="submit">Update Monitor</button>
         </form>
+        <p>The first unscored competitor is on stage. After scores are entered, the highlight moves to the next unscored competitor automatically.</p>
     </section>
 
     <section>
-        <h2>Event Group</h2>
+        <h2>Event Groups</h2>
+        <p th:if="${rowsByGroup == null || rowsByGroup.isEmpty()}">No athletes have been added yet.</p>
+        <form th:if="${rowsByGroup != null && !rowsByGroup.isEmpty()}"
+              id="event-score-form"
+              th:action="@{/events/{id}/monitor/scores(id=${event.id})}" method="post">
+        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+        <input type="hidden" id="event-score-autosave-url" th:value="@{/events/{id}/monitor/scores/autosave(id=${event.id})}" />
+        <p>
+            <span id="event-score-status" class="autosave-status" aria-live="polite">All changes saved</span>
+        </p>
+        <section th:each="groupRows : ${rowsByGroup}">
+        <h3 class="group-heading" th:text="${groupRows.key}">Group</h3>
         <table>
             <thead>
             <tr>
                 <th>Name</th>
                 <th>Division</th>
                 <th>Body Weight (kg)</th>
+                <th>Score</th>
+                <th>Division Place</th>
                 <th>Status</th>
             </tr>
             </thead>
             <tbody>
-            <tr th:if="${athletes == null || athletes.isEmpty()}">
-                <td colspan="4">No athletes have been added yet.</td>
-            </tr>
-            <tr th:each="athlete : ${athletes}" th:classappend="${activeAthleteIds.contains(athlete.id)} ? 'is-active'">
-                <td th:text="${athlete.name}">Name</td>
-                <td th:text="${athlete.division}">Division</td>
-                <td th:text="${athlete.bodyweight}">0</td>
-                <td th:text="${activeAthleteIds.contains(athlete.id)} ? 'Going now' : ''">Status</td>
+            <tr th:each="row : ${groupRows.value}"
+                th:classappend="${row.onStage} ? 'is-active' : (${row.nextInHole} ? 'is-next' : '')">
+                <td th:text="${row.athlete.name}">Name</td>
+                <td th:text="${row.athlete.division}">Division</td>
+                <td th:text="${row.athlete.bodyweight}">0</td>
+                <td>
+                    <div class="score-cell">
+                        <input type="number" step="0.01"
+                               th:name="|result__${row.athlete.id}|"
+                               th:value="${row.resultValue}"
+                               th:placeholder="${event.resultLabel}" />
+                        <select th:name="|unit__${row.athlete.id}|">
+                            <option value="" th:selected="${row.unit == null || row.unit.isBlank()}">Unit</option>
+                            <option value="kg" th:selected="${row.unit == 'kg' || (row.unit == null && event.defaultUnit == 'kg')}">kg</option>
+                            <option value="lb" th:selected="${row.unit == 'lb' || (row.unit == null && event.defaultUnit == 'lb')}">lb</option>
+                            <option value="reps" th:selected="${row.unit == 'reps' || (row.unit == null && event.defaultUnit == 'reps')}">reps</option>
+                            <option value="m" th:selected="${row.unit == 'm' || (row.unit == null && event.defaultUnit == 'm')}">m</option>
+                            <option value="ft" th:selected="${row.unit == 'ft' || (row.unit == null && event.defaultUnit == 'ft')}">ft</option>
+                            <option value="sec" th:selected="${row.unit == 'sec' || (row.unit == null && event.defaultUnit == 'sec')}">sec</option>
+                        </select>
+                        <div class="time-fields" th:if="${event.usesTime}">
+                            <input type="number" step="1" min="0"
+                                   th:name="|timeMinutes__${row.athlete.id}|"
+                                   th:value="${row.timeMinutes}"
+                                   placeholder="Min" />
+                            <input type="number" step="0.01" min="0"
+                                   th:name="|timeSeconds__${row.athlete.id}|"
+                                   th:value="${row.timeSeconds}"
+                                   placeholder="Sec" />
+                        </div>
+                        <div class="score-actions">
+                            <span th:text="${row.scoreDisplay}">Score</span>
+                        </div>
+                    </div>
+                </td>
+                <td th:text="${row.divisionPlace}">Place</td>
+                <td>
+                    <span class="status-on-stage" th:if="${row.onStage}">On Stage</span>
+                    <span class="status-next" th:if="${row.nextInHole}">Next In The Hole</span>
+                </td>
             </tr>
             </tbody>
         </table>
+        </section>
+        </form>
     </section>
 </main>
+<script>
+    const eventScoreForm = document.getElementById('event-score-form');
+    const eventScoreStatus = document.getElementById('event-score-status');
+    const eventScoreAutosaveUrl = document.getElementById('event-score-autosave-url');
+    let eventScoreTimer;
+    let eventScoreController;
+
+    function setEventScoreStatus(message, state) {
+        if (!eventScoreStatus) {
+            return;
+        }
+
+        eventScoreStatus.textContent = message;
+        eventScoreStatus.className = 'autosave-status' + (state ? ' ' + state : '');
+    }
+
+    function scheduleEventScoreAutosave() {
+        window.clearTimeout(eventScoreTimer);
+        setEventScoreStatus('Saving soon...', 'is-saving');
+        eventScoreTimer = window.setTimeout(saveEventScores, 700);
+    }
+
+    async function saveEventScores() {
+        if (!eventScoreForm || !eventScoreAutosaveUrl) {
+            return;
+        }
+
+        if (eventScoreController) {
+            eventScoreController.abort();
+        }
+
+        eventScoreController = new AbortController();
+        setEventScoreStatus('Saving...', 'is-saving');
+
+        try {
+            const response = await fetch(eventScoreAutosaveUrl.value, {
+                method: 'POST',
+                body: new FormData(eventScoreForm),
+                credentials: 'same-origin',
+                signal: eventScoreController.signal
+            });
+
+            if (!response.ok) {
+                throw new Error('Autosave failed');
+            }
+
+            setEventScoreStatus('Saved. Refreshing...', 'is-saved');
+            window.setTimeout(function () {
+                window.location.reload();
+            }, 400);
+        } catch (error) {
+            if (error.name === 'AbortError') {
+                return;
+            }
+
+            setEventScoreStatus('Could not autosave', 'is-error');
+        }
+    }
+
+    if (eventScoreForm) {
+        eventScoreForm.addEventListener('input', scheduleEventScoreAutosave);
+        eventScoreForm.addEventListener('change', scheduleEventScoreAutosave);
+        eventScoreForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+            saveEventScores();
+        });
+    }
+</script>
 </body>
 </html>

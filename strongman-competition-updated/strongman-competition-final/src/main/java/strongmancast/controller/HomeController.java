@@ -86,6 +86,7 @@ public class HomeController {
         Map<String, List<Competitor>> competitorsByDivision = buildCompetitorsByDivision(competition);
 
         model.addAttribute("events", loadEvents(competition));
+        model.addAttribute("configuredEvents", competitionEventRepository.findByCompetitionOrderBySortOrderAscIdAsc(competition));
         model.addAttribute("divisions", competitorsByDivision);
     }
 

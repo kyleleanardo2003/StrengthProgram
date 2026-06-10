@@ -3,34 +3,48 @@ package strongmancast.controller;
 import strongmancast.model.Athlete;
 import strongmancast.model.Competition;
 import strongmancast.model.CompetitionEvent;
+import strongmancast.model.EventMonitorRow;
+import strongmancast.model.EventResult;
 import strongmancast.repository.AthleteRepository;
 import strongmancast.repository.CompetitionEventRepository;
+import strongmancast.repository.EventResultRepository;
 import strongmancast.service.CompetitionContextService;
 import org.springframework.stereotype.Controller;
+import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Controller
 public class EventMonitorController {
 
     private final CompetitionEventRepository competitionEventRepository;
     private final AthleteRepository athleteRepository;
+    private final EventResultRepository eventResultRepository;
     private final CompetitionContextService competitionContextService;
 
     public EventMonitorController(
             CompetitionEventRepository competitionEventRepository,
             AthleteRepository athleteRepository,
+            EventResultRepository eventResultRepository,
             CompetitionContextService competitionContextService
     ) {
         this.competitionEventRepository = competitionEventRepository;
         this.athleteRepository = athleteRepository;
+        this.eventResultRepository = eventResultRepository;
         this.competitionContextService = competitionContextService;
     }
 
@@ -44,17 +58,28 @@ public class EventMonitorController {
     @PostMapping("/events/{id}/monitor")
     public String updateMonitor(
             @PathVariable Long id,
-            @RequestParam(defaultValue = "1") int activeSlots,
-            @RequestParam(required = false) Long activeAthleteOneId,
-            @RequestParam(required = false) Long activeAthleteTwoId
+            @RequestParam(defaultValue = "1") int activeSlots
     ) {
         CompetitionEvent event = competitionEventRepository.findById(id).orElseThrow();
         int slots = activeSlots == 2 ? 2 : 1;
         event.setActiveSlots(slots);
-        event.setActiveAthleteOneId(activeAthleteOneId);
-        event.setActiveAthleteTwoId(slots == 2 ? activeAthleteTwoId : null);
         competitionEventRepository.save(event);
         return "redirect:/events/" + id + "/monitor";
+    }
+
+    @PostMapping("/events/{id}/monitor/scores")
+    public String saveMonitorScores(@PathVariable Long id, @RequestParam Map<String, String> params) {
+        CompetitionEvent event = competitionEventRepository.findById(id).orElseThrow();
+        saveScoresForEvent(event, params);
+        return "redirect:/events/" + id + "/monitor";
+    }
+
+    @PostMapping("/events/{id}/monitor/scores/autosave")
+    @ResponseBody
+    public ResponseEntity<Void> autosaveMonitorScores(@PathVariable Long id, @RequestParam Map<String, String> params) {
+        CompetitionEvent event = competitionEventRepository.findById(id).orElseThrow();
+        saveScoresForEvent(event, params);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/events/{id}/live")
@@ -70,25 +95,293 @@ public class EventMonitorController {
                 ? List.of()
                 : athleteRepository.findByCompetitionOrderByDivisionAscNameAsc(competition);
 
-        Set<Long> activeAthleteIds = new LinkedHashSet<>();
-        if (event.getActiveAthleteOneId() != null) {
-            activeAthleteIds.add(event.getActiveAthleteOneId());
-        }
-        if (Integer.valueOf(2).equals(event.getActiveSlots()) && event.getActiveAthleteTwoId() != null) {
-            activeAthleteIds.add(event.getActiveAthleteTwoId());
+        List<EventResult> eventResults = competition == null
+                ? List.of()
+                : eventResultRepository.findByCompetition(competition).stream()
+                        .filter(result -> event.getEventName().equals(result.getEventName()))
+                        .toList();
+        Map<Long, EventResult> resultsByAthleteId = eventResults.stream()
+                .collect(Collectors.toMap(result -> result.getAthlete().getId(), Function.identity(), (first, second) -> first));
+
+        Set<Long> scoredAthleteIds = new LinkedHashSet<>();
+        for (EventResult result : eventResults) {
+            if (hasScore(result)) {
+                scoredAthleteIds.add(result.getAthlete().getId());
+            }
         }
 
-        List<Athlete> activeAthletes = athletes.stream()
-                .filter(athlete -> activeAthleteIds.contains(athlete.getId()))
-                .toList();
+        int activeSlots = Integer.valueOf(2).equals(event.getActiveSlots()) ? 2 : 1;
+        Set<Long> activeAthleteIds = new LinkedHashSet<>();
+        Set<Long> nextInHoleAthleteIds = new LinkedHashSet<>();
+
+        for (Athlete athlete : athletes) {
+            if (scoredAthleteIds.contains(athlete.getId())) {
+                continue;
+            }
+
+            if (activeAthleteIds.size() < activeSlots) {
+                activeAthleteIds.add(athlete.getId());
+            } else if (nextInHoleAthleteIds.size() < activeSlots) {
+                nextInHoleAthleteIds.add(athlete.getId());
+            } else {
+                break;
+            }
+        }
+
+        Map<Long, Integer> divisionPlaces = calculateDivisionPlaces(event, athletes, resultsByAthleteId);
+        Map<String, List<EventMonitorRow>> rowsByGroup = new LinkedHashMap<>();
+        for (Athlete athlete : athletes) {
+            String status = "";
+            if (activeAthleteIds.contains(athlete.getId())) {
+                status = "ON_STAGE";
+            } else if (nextInHoleAthleteIds.contains(athlete.getId())) {
+                status = "NEXT_IN_HOLE";
+            }
+
+            EventResult result = resultsByAthleteId.get(athlete.getId());
+            EventMonitorRow row = new EventMonitorRow(
+                    athlete,
+                    result,
+                    formatScore(result),
+                    divisionPlaces.get(athlete.getId()),
+                    status
+            );
+            rowsByGroup.computeIfAbsent(eventGroupFor(athlete), key -> new ArrayList<>()).add(row);
+        }
+
+        rowsByGroup.values().forEach(rows -> rows.sort(this::compareRunOrderRows));
+        rowsByGroup = rowsByGroup.entrySet().stream()
+                .sorted((first, second) -> Integer.compare(groupRunOrderRank(first.getValue()), groupRunOrderRank(second.getValue())))
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (first, second) -> first,
+                        LinkedHashMap::new
+                ));
 
         model.addAttribute("event", event);
         model.addAttribute("athletes", athletes);
+        model.addAttribute("rowsByGroup", rowsByGroup);
         model.addAttribute("activeAthleteIds", activeAthleteIds);
-        model.addAttribute("activeAthletes", activeAthletes);
+        model.addAttribute("nextInHoleAthleteIds", nextInHoleAthleteIds);
+        model.addAttribute("scoredAthleteIds", scoredAthleteIds);
         model.addAttribute("competitionId", competition == null ? null : competition.getId());
         if (competition != null) {
             competitionContextService.addCompetitionModel(model, competition);
         }
+    }
+
+    private boolean hasScore(EventResult result) {
+        return result.getResult() != null || result.getTime() != null;
+    }
+
+    private void saveScoresForEvent(CompetitionEvent event, Map<String, String> params) {
+        Competition competition = event.getCompetition();
+        if (competition == null) {
+            return;
+        }
+
+        for (Athlete athlete : athleteRepository.findByCompetitionOrderByDivisionAscNameAsc(competition)) {
+            String suffix = "__" + athlete.getId();
+            Double resultValue = parseOptionalDouble(params.get("result" + suffix));
+            String unit = params.get("unit" + suffix);
+            Double time = parseTime(params, suffix);
+
+            EventResult eventResult = eventResultRepository
+                    .findByAthleteAndCompetitionAndEventName(athlete, competition, event.getEventName())
+                    .orElseGet(EventResult::new);
+            if (eventResult.getId() == null && resultValue == null && time == null) {
+                continue;
+            }
+
+            eventResult.setAthlete(athlete);
+            eventResult.setCompetition(competition);
+            eventResult.setEventName(event.getEventName());
+            eventResult.setResult(resultValue);
+            eventResult.setUnit(resolveUnit(event, unit));
+            eventResult.setTime(time);
+            eventResultRepository.save(eventResult);
+        }
+    }
+
+    private Double parseTime(Map<String, String> params, String suffix) {
+        Double minutes = parseOptionalDouble(params.get("timeMinutes" + suffix));
+        Double seconds = parseOptionalDouble(params.get("timeSeconds" + suffix));
+
+        if (minutes == null && seconds == null) {
+            return null;
+        }
+
+        return (minutes == null ? 0.0 : minutes * 60) + (seconds == null ? 0.0 : seconds);
+    }
+
+    private Double parseOptionalDouble(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+
+        try {
+            return Double.parseDouble(value.trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private String resolveUnit(CompetitionEvent event, String unit) {
+        if (unit != null && !unit.isBlank()) {
+            return unit;
+        }
+        return event.getDefaultUnit();
+    }
+
+    private int compareRunOrderRows(EventMonitorRow first, EventMonitorRow second) {
+        return Integer.compare(rowRunOrderRank(first), rowRunOrderRank(second));
+    }
+
+    private int groupRunOrderRank(List<EventMonitorRow> rows) {
+        return rows.stream()
+                .mapToInt(this::rowRunOrderRank)
+                .min()
+                .orElse(99);
+    }
+
+    private int rowRunOrderRank(EventMonitorRow row) {
+        if (row.isOnStage()) {
+            return 0;
+        }
+        if (row.isNextInHole()) {
+            return 1;
+        }
+        if (row.getScoreDisplay() == null || row.getScoreDisplay().isBlank()) {
+            return 2;
+        }
+        return 3;
+    }
+
+    private Map<Long, Integer> calculateDivisionPlaces(
+            CompetitionEvent event,
+            List<Athlete> athletes,
+            Map<Long, EventResult> resultsByAthleteId
+    ) {
+        Map<String, List<Athlete>> athletesByDivision = new LinkedHashMap<>();
+        for (Athlete athlete : athletes) {
+            athletesByDivision.computeIfAbsent(divisionFor(athlete), key -> new ArrayList<>()).add(athlete);
+        }
+
+        Map<Long, Integer> places = new LinkedHashMap<>();
+        for (List<Athlete> divisionAthletes : athletesByDivision.values()) {
+            List<Athlete> scoredAthletes = divisionAthletes.stream()
+                    .filter(athlete -> {
+                        EventResult result = resultsByAthleteId.get(athlete.getId());
+                        return result != null && hasScore(result);
+                    })
+                    .sorted((first, second) -> compareResults(event, resultsByAthleteId.get(first.getId()), resultsByAthleteId.get(second.getId())))
+                    .toList();
+
+            for (int index = 0; index < scoredAthletes.size(); ) {
+                int tieEnd = index;
+                while (tieEnd + 1 < scoredAthletes.size()
+                        && sameResult(event, resultsByAthleteId.get(scoredAthletes.get(index).getId()), resultsByAthleteId.get(scoredAthletes.get(tieEnd + 1).getId()))) {
+                    tieEnd++;
+                }
+
+                int place = index + 1;
+                for (int placeIndex = index; placeIndex <= tieEnd; placeIndex++) {
+                    places.put(scoredAthletes.get(placeIndex).getId(), place);
+                }
+
+                index = tieEnd + 1;
+            }
+        }
+
+        return places;
+    }
+
+    private int compareResults(CompetitionEvent event, EventResult first, EventResult second) {
+        if (first == null || second == null) {
+            return Comparator.nullsLast(Comparator.comparing(EventResult::getId)).compare(first, second);
+        }
+
+        if (event.isRequiresCompletionForTimeRanking()) {
+            boolean firstCompleted = completedTarget(event, first);
+            boolean secondCompleted = completedTarget(event, second);
+            if (firstCompleted && secondCompleted) {
+                return Double.compare(valueOrMax(first.getTime()), valueOrMax(second.getTime()));
+            }
+            if (firstCompleted != secondCompleted) {
+                return firstCompleted ? -1 : 1;
+            }
+        }
+
+        if (event.isUsesTime() && !event.isTimeIsTieBreaker()) {
+            return Double.compare(valueOrMax(first.getTime()), valueOrMax(second.getTime()));
+        }
+
+        double firstResult = valueOrZero(first.getResult());
+        double secondResult = valueOrZero(second.getResult());
+        int resultCompare = event.isHigherIsBetter()
+                ? Double.compare(secondResult, firstResult)
+                : Double.compare(firstResult, secondResult);
+        if (resultCompare != 0) {
+            return resultCompare;
+        }
+
+        if (event.isUsesTime() && event.isTimeIsTieBreaker()) {
+            return Double.compare(valueOrMax(first.getTime()), valueOrMax(second.getTime()));
+        }
+
+        return 0;
+    }
+
+    private boolean sameResult(CompetitionEvent event, EventResult first, EventResult second) {
+        return compareResults(event, first, second) == 0;
+    }
+
+    private boolean completedTarget(CompetitionEvent event, EventResult result) {
+        return event.getCompletionTarget() != null
+                && result.getResult() != null
+                && result.getResult() >= event.getCompletionTarget();
+    }
+
+    private double valueOrZero(Double value) {
+        return value == null ? 0.0 : value;
+    }
+
+    private double valueOrMax(Double value) {
+        return value == null ? Double.MAX_VALUE : value;
+    }
+
+    private String formatScore(EventResult result) {
+        if (result == null || !hasScore(result)) {
+            return "";
+        }
+
+        List<String> parts = new ArrayList<>();
+        if (result.getResult() != null) {
+            String score = formatNumber(result.getResult());
+            if (result.getUnit() != null && !result.getUnit().isBlank()) {
+                score += " " + result.getUnit();
+            }
+            parts.add(score);
+        }
+        if (result.getTime() != null) {
+            parts.add(formatNumber(result.getTime()) + " sec");
+        }
+        return String.join(" / ", parts);
+    }
+
+    private String formatNumber(Double value) {
+        return value % 1 == 0 ? String.valueOf(value.intValue()) : String.valueOf(value);
+    }
+
+    private String eventGroupFor(Athlete athlete) {
+        if (athlete.getEventGroup() != null && !athlete.getEventGroup().isBlank()) {
+            return athlete.getEventGroup();
+        }
+        return divisionFor(athlete);
+    }
+
+    private String divisionFor(Athlete athlete) {
+        return athlete.getDivision() == null || athlete.getDivision().isBlank() ? "Unassigned" : athlete.getDivision();
     }
 }

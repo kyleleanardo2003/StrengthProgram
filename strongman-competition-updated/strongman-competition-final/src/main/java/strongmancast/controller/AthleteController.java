@@ -57,6 +57,7 @@ public class AthleteController {
         athlete.setMembership(updatedAthlete.getMembership());
         athlete.setBodyweight(updatedAthlete.getBodyweight());
         athlete.setDivision(updatedAthlete.getDivision());
+        athlete.setEventGroup(updatedAthlete.getEventGroup());
         athleteRepository.save(athlete);
         Long competitionId = athlete.getCompetition() == null ? null : athlete.getCompetition().getId();
         return "redirect:/organizer" + (competitionId == null ? "" : "?competitionId=" + competitionId);
