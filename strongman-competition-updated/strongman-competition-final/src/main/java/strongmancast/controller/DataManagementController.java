@@ -100,7 +100,7 @@ public class DataManagementController {
 
     private void seedBaseEvents(Competition competition) {
         saveEvent(competition, 1, "Log And KB", "Reps", "reps", true, false, false, false, null, "Record completed reps.");
-        saveEvent(competition, 2, "Truck Pull Time", "Time", "sec", false, true, false, false, null, "Record the truck pull time in seconds. Fastest time wins.");
+        saveEvent(competition, 2, "Truck Pull", "Distance", "ft", true, true, false, true, 50.0, "Record distance in feet. If the athlete completes the 50 ft pull, fastest time wins.");
         saveEvent(competition, 3, "Yoke And Frame", "Time", "sec", false, true, false, false, null, "Record the yoke and frame time in seconds. Fastest time wins.");
         saveEvent(competition, 4, "Car Deadlift", "Reps", "reps", true, false, false, false, null, "Record completed reps.");
         saveEvent(competition, 5, "Stone Load", "Reps", "reps", true, false, false, false, null, "Record completed stone loads.");
