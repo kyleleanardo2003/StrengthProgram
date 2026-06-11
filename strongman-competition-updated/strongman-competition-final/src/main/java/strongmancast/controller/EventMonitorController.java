@@ -137,6 +137,7 @@ public class EventMonitorController {
         }
 
         Map<Long, Integer> divisionPlaces = calculateDivisionPlaces(event, athletes, resultsByAthleteId);
+        Map<Long, Double> eventPoints = calculateEventPoints(event, athletes, resultsByAthleteId);
         Map<Long, Integer> overallPlaces = calculateOverallPlaces(competition, athletes);
         Map<String, List<EventMonitorRow>> rowsByGroup = new LinkedHashMap<>();
         for (Athlete athlete : runOrderAthletes) {
@@ -156,6 +157,7 @@ public class EventMonitorController {
                     divisionFor(athlete),
                     formatScore(result),
                     divisionPlaces.get(athlete.getId()),
+                    eventPoints.get(athlete.getId()),
                     overallPlaces.get(athlete.getId()),
                     status
             );
@@ -425,6 +427,50 @@ public class EventMonitorController {
         }
 
         return places;
+    }
+
+    private Map<Long, Double> calculateEventPoints(
+            CompetitionEvent event,
+            List<Athlete> athletes,
+            Map<Long, EventResult> resultsByAthleteId
+    ) {
+        Map<String, List<Athlete>> athletesByDivision = new LinkedHashMap<>();
+        for (Athlete athlete : athletes) {
+            athletesByDivision.computeIfAbsent(divisionFor(athlete), key -> new ArrayList<>()).add(athlete);
+        }
+
+        Map<Long, Double> points = new LinkedHashMap<>();
+        for (List<Athlete> divisionAthletes : athletesByDivision.values()) {
+            List<Athlete> scoredAthletes = divisionAthletes.stream()
+                    .filter(athlete -> {
+                        EventResult result = resultsByAthleteId.get(athlete.getId());
+                        return result != null && hasScore(result);
+                    })
+                    .sorted((first, second) -> compareResults(event, resultsByAthleteId.get(first.getId()), resultsByAthleteId.get(second.getId())))
+                    .toList();
+
+            for (int index = 0; index < scoredAthletes.size(); ) {
+                int tieEnd = index;
+                while (tieEnd + 1 < scoredAthletes.size()
+                        && sameResult(event, resultsByAthleteId.get(scoredAthletes.get(index).getId()), resultsByAthleteId.get(scoredAthletes.get(tieEnd + 1).getId()))) {
+                    tieEnd++;
+                }
+
+                double sumPoints = 0.0;
+                for (int placeIndex = index; placeIndex <= tieEnd; placeIndex++) {
+                    sumPoints += divisionAthletes.size() - placeIndex;
+                }
+                double averagePoints = sumPoints / (tieEnd - index + 1);
+
+                for (int placeIndex = index; placeIndex <= tieEnd; placeIndex++) {
+                    points.put(scoredAthletes.get(placeIndex).getId(), averagePoints);
+                }
+
+                index = tieEnd + 1;
+            }
+        }
+
+        return points;
     }
 
     private int compareResults(CompetitionEvent event, EventResult first, EventResult second) {

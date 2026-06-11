@@ -330,20 +330,17 @@
             <table>
                 <thead>
                 <tr>
-                    <th class="small-col">Place</th>
                     <th class="athlete-col">Athlete</th>
                     <th class="medium-col">Membership</th>
                     <th class="small-col">Body Wt (kg)</th>
-                    <th class="event-col" th:each="event : ${configuredEvents}" th:text="${event.eventName}">Event</th>
+                    <th class="small-col">Place</th>
                     <th class="small-col">Total</th>
+                    <th class="event-col" th:each="event : ${configuredEvents}" th:text="${event.eventName}">Event</th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr th:each="row : ${divisionRows.value}"
                     th:classappend="${row.onStage} ? 'is-active' : (${row.nextInHole} ? 'is-next' : (${row.nextToHole} ? 'is-next-to-hole' : ''))">
-                    <td class="small-col">
-                        <div class="readonly" th:text="${row.competitor != null ? row.competitor.place : ''}">1</div>
-                    </td>
                     <td class="athlete-col">
                         <input type="text"
                                th:name="|athleteName__${row.athlete.id}|"
@@ -358,6 +355,12 @@
                         <input type="number" step="0.1"
                                th:name="|bodyweight__${row.athlete.id}|"
                                th:value="${row.athlete.bodyweight}" required />
+                    </td>
+                    <td class="small-col">
+                        <div class="readonly" th:text="${row.competitor != null ? row.competitor.place : ''}">1</div>
+                    </td>
+                    <td class="small-col">
+                        <div class="readonly" th:text="${row.competitor != null ? row.competitor.totalPoints : ''}">0</div>
                     </td>
                     <td class="event-col" th:each="event : ${configuredEvents}">
                         <div class="event-cell">
@@ -406,9 +409,6 @@
                                 <span th:text="${row.competitor != null ? row.competitor.eventPoints[event.eventName] : ''}">0</span>
                             </div>
                         </div>
-                    </td>
-                    <td class="small-col">
-                        <div class="readonly" th:text="${row.competitor != null ? row.competitor.totalPoints : ''}">0</div>
                     </td>
                 </tr>
                 </tbody>

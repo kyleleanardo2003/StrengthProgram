@@ -206,8 +206,8 @@
             <thead>
             <tr>
                 <th>Name</th>
-                <th>Body Weight (kg)</th>
                 <th>Event Place</th>
+                <th>Event Points</th>
                 <th>Score</th>
                 <th>Overall Place</th>
                 <th>Status</th>
@@ -217,8 +217,8 @@
             <tr th:each="row : ${groupRows.value}"
                 th:classappend="${row.onStage} ? 'is-active' : (${row.nextInHole} ? 'is-next' : (${row.nextToHole} ? 'is-next-to-hole' : ''))">
                 <td th:text="${row.athlete.name}">Name</td>
-                <td th:text="${row.athlete.bodyweight}">0</td>
                 <td th:text="${row.divisionPlace}">Place</td>
+                <td th:text="${row.eventPoints}">Points</td>
                 <td>
                     <div class="score-cell">
                         <input type="number" step="0.01"

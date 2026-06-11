@@ -21,6 +21,7 @@ public class SecurityConfig {
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/").permitAll()
                         .requestMatchers(HttpMethod.GET, "/results").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/results.csv").permitAll()
                         .requestMatchers(HttpMethod.GET, "/archive").permitAll()
                         .requestMatchers(HttpMethod.GET, "/competitions").permitAll()
                         .requestMatchers(HttpMethod.GET, "/events/*/live").permitAll()

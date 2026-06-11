@@ -7,15 +7,17 @@ public class EventMonitorRow {
     private final String divisionDisplay;
     private final String scoreDisplay;
     private final Integer divisionPlace;
+    private final Double eventPoints;
     private final Integer overallPlace;
     private final String status;
 
-    public EventMonitorRow(Athlete athlete, EventResult result, String divisionDisplay, String scoreDisplay, Integer divisionPlace, Integer overallPlace, String status) {
+    public EventMonitorRow(Athlete athlete, EventResult result, String divisionDisplay, String scoreDisplay, Integer divisionPlace, Double eventPoints, Integer overallPlace, String status) {
         this.athlete = athlete;
         this.result = result;
         this.divisionDisplay = divisionDisplay;
         this.scoreDisplay = scoreDisplay;
         this.divisionPlace = divisionPlace;
+        this.eventPoints = eventPoints;
         this.overallPlace = overallPlace;
         this.status = status;
     }
@@ -74,6 +76,10 @@ public class EventMonitorRow {
 
     public Integer getDivisionPlace() {
         return divisionPlace;
+    }
+
+    public Double getEventPoints() {
+        return eventPoints;
     }
 
     public Integer getOverallPlace() {

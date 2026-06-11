@@ -18,6 +18,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import jakarta.servlet.http.HttpServletResponse;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.util.*;
 
@@ -63,6 +68,42 @@ public class HomeController {
         return "index";
     }
 
+    @GetMapping("/results.csv")
+    public void exportResultsCsv(@RequestParam(required = false) Long competitionId, HttpServletResponse response) throws IOException {
+        Competition competition = competitionContextService.currentCompetition(competitionId);
+        List<EventConfig> configuredEvents = loadEvents(competition);
+        Map<String, List<Competitor>> competitorsByDivision = buildCompetitorsByDivision(competition);
+
+        response.setContentType("text/csv");
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        response.setHeader("Content-Disposition", "attachment; filename=\"" + csvFilename(competition) + "\"");
+
+        try (PrintWriter writer = response.getWriter()) {
+            List<String> header = new ArrayList<>(List.of("Division", "Name", "Body Weight (kg)", "Place", "Total Points"));
+            for (EventConfig event : configuredEvents) {
+                header.add(event.getEventName() + " Result");
+                header.add(event.getEventName() + " Points");
+            }
+            writeCsvRow(writer, header);
+
+            for (Map.Entry<String, List<Competitor>> divisionEntry : competitorsByDivision.entrySet()) {
+                for (Competitor competitor : divisionEntry.getValue()) {
+                    List<String> row = new ArrayList<>();
+                    row.add(divisionEntry.getKey());
+                    row.add(competitor.getName());
+                    row.add(formatNumber(competitor.getBodyWeight()));
+                    row.add(String.valueOf(competitor.getPlace()));
+                    row.add(formatNumber(competitor.getTotalPoints()));
+                    for (EventConfig event : configuredEvents) {
+                        row.add(competitor.getDisplayResults().getOrDefault(event.getEventName(), ""));
+                        row.add(formatNumber(competitor.getEventPoints().get(event.getEventName())));
+                    }
+                    writeCsvRow(writer, row);
+                }
+            }
+        }
+    }
+
     @GetMapping("/organizer")
     public String organizer(@RequestParam(required = false) Long competitionId, Model model) {
         try {
@@ -93,6 +134,42 @@ public class HomeController {
         model.addAttribute("events", loadEvents(competition));
         model.addAttribute("configuredEvents", competitionEventRepository.findByCompetitionOrderBySortOrderAscIdAsc(competition));
         model.addAttribute("divisions", competitorsByDivision);
+    }
+
+    private void writeCsvRow(PrintWriter writer, List<String> values) {
+        for (int index = 0; index < values.size(); index++) {
+            if (index > 0) {
+                writer.print(",");
+            }
+            writer.print(csvValue(values.get(index)));
+        }
+        writer.println();
+    }
+
+    private String csvValue(String value) {
+        String text = value == null ? "" : value;
+        boolean needsQuotes = text.contains(",") || text.contains("\"") || text.contains("\n") || text.contains("\r");
+        text = text.replace("\"", "\"\"");
+        return needsQuotes ? "\"" + text + "\"" : text;
+    }
+
+    private String csvFilename(Competition competition) {
+        String name = competition.getName() == null || competition.getName().isBlank()
+                ? "strongmancast-results"
+                : competition.getName().toLowerCase(Locale.ROOT)
+                        .replaceAll("[^a-z0-9]+", "-")
+                        .replaceAll("(^-|-$)", "");
+        if (name.isBlank()) {
+            name = "strongmancast-results";
+        }
+        return name + "-results.csv";
+    }
+
+    private String formatNumber(Double value) {
+        if (value == null) {
+            return "";
+        }
+        return value % 1 == 0 ? String.valueOf(value.intValue()) : String.valueOf(value);
     }
 
     private Map<String, List<Competitor>> buildCompetitorsByDivision(Competition competition) {

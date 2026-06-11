@@ -44,6 +44,20 @@
             display: inline-block;
             margin: 6px 10px 6px 0;
         }
+        .event-control-links {
+            display: inline-flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin: 6px 0;
+        }
+        .event-control-links select {
+            width: auto;
+            min-width: 220px;
+        }
+        .event-control-links a {
+            margin-right: 0;
+        }
         .danger-zone button,
         .delete-button {
             background-color: #a83232;
@@ -73,43 +87,83 @@
             background-color: #2d2d2d;
         }
         .edit-grid {
-            display: grid;
-            gap: 10px;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            align-items: end;
-        }
-        .edit-grid .notes-field {
-            grid-column: span 2;
+            display: contents;
         }
         .event-form-grid {
-            display: grid;
-            gap: 16px;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            align-items: end;
-            max-width: 1200px;
+            margin: 0;
         }
-        .event-form-grid .wide {
-            grid-column: 1 / -1;
+        .event-table-wrap {
+            margin: 16px 0 30px;
+            overflow-x: auto;
         }
-        .field label,
-        .edit-grid label {
-            display: block;
-            font-size: 0.8em;
-            margin-bottom: 4px;
+        .event-table {
+            margin-top: 0;
+            min-width: 1320px;
         }
-        .edit-grid input,
-        .edit-grid select,
-        .edit-grid textarea {
-            width: 100%;
+        .event-table th,
+        .event-table td {
+            text-align: center;
+            vertical-align: middle;
+        }
+        .event-table input,
+        .event-table select,
+        .event-table textarea {
+            font-size: 0.92rem;
+        }
+        .order-col {
+            width: 70px;
+        }
+        .name-col {
+            min-width: 190px;
+        }
+        .label-col {
+            min-width: 170px;
+        }
+        .unit-col {
+            width: 95px;
+        }
+        .target-col {
+            width: 120px;
+        }
+        .check-col {
+            width: 105px;
+        }
+        .notes-col {
+            min-width: 250px;
+        }
+        .actions-col {
+            min-width: 130px;
+        }
+        .event-table textarea {
+            min-height: 46px;
+            resize: vertical;
+        }
+        .event-table input[type="checkbox"] {
+            width: auto;
         }
         .checkbox-row {
             display: flex;
             gap: 8px;
             align-items: center;
+            justify-content: center;
             margin: 0;
         }
         .checkbox-row input {
             width: auto;
+        }
+        .action-stack {
+            display: grid;
+            gap: 8px;
+        }
+        .action-stack form {
+            margin: 0;
+        }
+        .autosave-status {
+            display: block;
+            min-height: 1.2em;
+            margin-top: 6px;
+            color: #9fd0ff;
+            font-size: 0.82rem;
         }
     </style>
     <link rel="stylesheet" th:href="@{/app.css}">
@@ -130,6 +184,16 @@
         <input type="hidden" name="competitionId" th:value="${competitionId}" />
         <button type="submit">Delete All Events</button>
     </form>
+    <div class="event-control-links" th:if="${events != null && !events.isEmpty()}">
+        <label for="eventLinkSelect">Event</label>
+        <select id="eventLinkSelect">
+            <option th:each="configuredEvent : ${events}"
+                    th:value="${configuredEvent.id}"
+                    th:text="${configuredEvent.eventName}">Event</option>
+        </select>
+        <a id="eventMonitorLink" class="hub-button" href="#">Event Monitor</a>
+        <a id="publicEventLink" class="hub-button" href="#">Public Event Page</a>
+    </div>
 </section>
 
 <h2>Scoring Settings</h2>
@@ -152,142 +216,203 @@
 <form class="event-form-grid" th:action="@{/events}" th:object="${event}" method="post">
     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
     <input type="hidden" name="competitionId" th:value="${competitionId}" />
-    <div class="field">
-        <label for="sortOrder">Order</label>
-        <input type="number" id="sortOrder" th:field="*{sortOrder}" required />
+    <div class="event-table-wrap">
+        <table class="event-table">
+            <thead>
+            <tr>
+                <th class="order-col">Order</th>
+                <th class="name-col">Event Name</th>
+                <th class="label-col">Result Label</th>
+                <th class="unit-col">Unit</th>
+                <th class="target-col">Completion Target</th>
+                <th class="check-col">Higher Wins</th>
+                <th class="check-col">Uses Time</th>
+                <th class="check-col">Time Tie-Break</th>
+                <th class="check-col">Complete Target First</th>
+                <th class="notes-col">Special Fields / Notes</th>
+                <th class="actions-col">Action</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td><input type="number" id="sortOrder" th:field="*{sortOrder}" required /></td>
+                <td><input type="text" id="eventName" th:field="*{eventName}" required /></td>
+                <td><input type="text" id="resultLabel" th:field="*{resultLabel}" placeholder="Weight, reps, distance, etc." required /></td>
+                <td>
+                    <select id="defaultUnit" th:field="*{defaultUnit}">
+                        <option value="">None</option>
+                        <option value="kg">kg</option>
+                        <option value="lb">lb</option>
+                        <option value="reps">reps</option>
+                        <option value="m">m</option>
+                        <option value="ft">ft</option>
+                        <option value="sec">sec</option>
+                    </select>
+                </td>
+                <td><input type="number" step="0.01" id="completionTarget" th:field="*{completionTarget}" placeholder="6" /></td>
+                <td><input type="checkbox" th:field="*{higherIsBetter}" /></td>
+                <td><input type="checkbox" th:field="*{usesTime}" /></td>
+                <td><input type="checkbox" th:field="*{timeIsTieBreaker}" /></td>
+                <td><input type="checkbox" th:field="*{requiresCompletionForTimeRanking}" /></td>
+                <td><textarea id="extraFields" th:field="*{extraFields}" placeholder="Example: implement weight, distance, rep cap"></textarea></td>
+                <td><button type="submit">Add Event</button></td>
+            </tr>
+            </tbody>
+        </table>
     </div>
-
-    <div class="field">
-        <label for="eventName">Event Name</label>
-        <input type="text" id="eventName" th:field="*{eventName}" required />
-    </div>
-
-    <div class="field">
-        <label for="resultLabel">Result Label</label>
-        <input type="text" id="resultLabel" th:field="*{resultLabel}" placeholder="Weight, reps, distance, height, etc." required />
-    </div>
-
-    <div class="field">
-        <label for="defaultUnit">Default Unit</label>
-        <select id="defaultUnit" th:field="*{defaultUnit}">
-            <option value="">No unit</option>
-            <option value="kg">kg</option>
-            <option value="lb">lb</option>
-            <option value="reps">reps</option>
-            <option value="m">m</option>
-            <option value="ft">ft</option>
-            <option value="sec">sec</option>
-        </select>
-    </div>
-
-    <div class="field">
-        <label for="completionTarget">Completion Target</label>
-        <input type="number" step="0.01" id="completionTarget" th:field="*{completionTarget}" placeholder="Example: 6 flips" />
-    </div>
-
-    <label class="checkbox-row">
-        <input type="checkbox" th:field="*{higherIsBetter}" />
-        Higher result wins
-    </label>
-
-    <label class="checkbox-row">
-        <input type="checkbox" th:field="*{usesTime}" />
-        Uses time
-    </label>
-
-    <label class="checkbox-row">
-        <input type="checkbox" th:field="*{timeIsTieBreaker}" />
-        Time breaks ties
-    </label>
-
-    <label class="checkbox-row">
-        <input type="checkbox" th:field="*{requiresCompletionForTimeRanking}" />
-        Must complete target before time ranks
-    </label>
-
-    <div class="field wide">
-        <label for="extraFields">Special Fields / Notes</label>
-        <textarea id="extraFields" th:field="*{extraFields}" placeholder="Example: implement weight, frame length, distance, rep cap, split times, stone series weights"></textarea>
-    </div>
-
-    <button type="submit">Add Event</button>
 </form>
 
 <h2>Edit Events</h2>
-<table>
+<div class="event-table-wrap">
+<table class="event-table">
     <thead>
     <tr>
-        <th>Event Setup</th>
+        <th class="order-col">Order</th>
+        <th class="name-col">Event Name</th>
+        <th class="label-col">Result Label</th>
+        <th class="unit-col">Unit</th>
+        <th class="target-col">Completion Target</th>
+        <th class="check-col">Higher Wins</th>
+        <th class="check-col">Uses Time</th>
+        <th class="check-col">Time Tie-Break</th>
+        <th class="check-col">Complete Target First</th>
+        <th class="notes-col">Special Fields / Notes</th>
+        <th class="actions-col">Action</th>
     </tr>
     </thead>
     <tbody>
     <tr th:each="configuredEvent : ${events}">
         <td>
-            <form class="edit-grid" th:action="@{/events/{id}(id=${configuredEvent.id})}" method="post">
+            <input type="number" name="sortOrder" th:value="${configuredEvent.sortOrder}" required
+                   th:form="|edit-event-${configuredEvent.id}|" />
+        </td>
+        <td>
+            <input type="text" name="eventName" th:value="${configuredEvent.eventName}" required
+                   th:form="|edit-event-${configuredEvent.id}|" />
+        </td>
+        <td>
+            <input type="text" name="resultLabel" th:value="${configuredEvent.resultLabel}" required
+                   th:form="|edit-event-${configuredEvent.id}|" />
+        </td>
+        <td>
+            <select name="defaultUnit" th:form="|edit-event-${configuredEvent.id}|">
+                <option value="" th:selected="${configuredEvent.defaultUnit == null || configuredEvent.defaultUnit.isBlank()}">None</option>
+                <option value="kg" th:selected="${configuredEvent.defaultUnit == 'kg'}">kg</option>
+                <option value="lb" th:selected="${configuredEvent.defaultUnit == 'lb'}">lb</option>
+                <option value="reps" th:selected="${configuredEvent.defaultUnit == 'reps'}">reps</option>
+                <option value="m" th:selected="${configuredEvent.defaultUnit == 'm'}">m</option>
+                <option value="ft" th:selected="${configuredEvent.defaultUnit == 'ft'}">ft</option>
+                <option value="sec" th:selected="${configuredEvent.defaultUnit == 'sec'}">sec</option>
+            </select>
+        </td>
+        <td>
+            <input type="number" step="0.01" name="completionTarget" th:value="${configuredEvent.completionTarget}"
+                   th:form="|edit-event-${configuredEvent.id}|" />
+        </td>
+        <td>
+            <input type="checkbox" name="higherIsBetter" value="true" th:checked="${configuredEvent.higherIsBetter}"
+                   th:form="|edit-event-${configuredEvent.id}|" />
+        </td>
+        <td>
+            <input type="checkbox" name="usesTime" value="true" th:checked="${configuredEvent.usesTime}"
+                   th:form="|edit-event-${configuredEvent.id}|" />
+        </td>
+        <td>
+            <input type="checkbox" name="timeIsTieBreaker" value="true" th:checked="${configuredEvent.timeIsTieBreaker}"
+                   th:form="|edit-event-${configuredEvent.id}|" />
+        </td>
+        <td>
+            <input type="checkbox" name="requiresCompletionForTimeRanking" value="true" th:checked="${configuredEvent.requiresCompletionForTimeRanking}"
+                   th:form="|edit-event-${configuredEvent.id}|" />
+        </td>
+        <td>
+            <textarea name="extraFields" th:text="${configuredEvent.extraFields}"
+                      th:form="|edit-event-${configuredEvent.id}|"></textarea>
+        </td>
+        <td>
+            <div class="action-stack">
+            <form th:id="|edit-event-${configuredEvent.id}|"
+                  th:action="@{/events/{id}/autosave(id=${configuredEvent.id})}"
+                  method="post"
+                  class="event-autosave-form">
                 <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <input type="hidden" name="competitionId" th:value="${competitionId}" />
-                <div>
-                    <label>Order</label>
-                    <input type="number" name="sortOrder" th:value="${configuredEvent.sortOrder}" required />
-                </div>
-                <div>
-                    <label>Name</label>
-                    <input type="text" name="eventName" th:value="${configuredEvent.eventName}" required />
-                </div>
-                <div>
-                    <label>Result Label</label>
-                    <input type="text" name="resultLabel" th:value="${configuredEvent.resultLabel}" required />
-                </div>
-                <div>
-                    <label>Unit</label>
-                    <select name="defaultUnit">
-                        <option value="" th:selected="${configuredEvent.defaultUnit == null || configuredEvent.defaultUnit.isBlank()}">None</option>
-                        <option value="kg" th:selected="${configuredEvent.defaultUnit == 'kg'}">kg</option>
-                        <option value="lb" th:selected="${configuredEvent.defaultUnit == 'lb'}">lb</option>
-                        <option value="reps" th:selected="${configuredEvent.defaultUnit == 'reps'}">reps</option>
-                        <option value="m" th:selected="${configuredEvent.defaultUnit == 'm'}">m</option>
-                        <option value="ft" th:selected="${configuredEvent.defaultUnit == 'ft'}">ft</option>
-                        <option value="sec" th:selected="${configuredEvent.defaultUnit == 'sec'}">sec</option>
-                    </select>
-                </div>
-                <label class="checkbox-row">
-                    <input type="checkbox" name="higherIsBetter" value="true" th:checked="${configuredEvent.higherIsBetter}" />
-                    Higher wins
-                </label>
-                <label class="checkbox-row">
-                    <input type="checkbox" name="usesTime" value="true" th:checked="${configuredEvent.usesTime}" />
-                    Uses time
-                </label>
-                <label class="checkbox-row">
-                    <input type="checkbox" name="timeIsTieBreaker" value="true" th:checked="${configuredEvent.timeIsTieBreaker}" />
-                    Time tie-break
-                </label>
-                <label class="checkbox-row">
-                    <input type="checkbox" name="requiresCompletionForTimeRanking" value="true" th:checked="${configuredEvent.requiresCompletionForTimeRanking}" />
-                    Complete target first
-                </label>
-                <div>
-                    <label>Completion Target</label>
-                    <input type="number" step="0.01" name="completionTarget" th:value="${configuredEvent.completionTarget}" />
-                </div>
-                <div class="notes-field">
-                    <label>Special Fields / Notes</label>
-                    <textarea name="extraFields" th:text="${configuredEvent.extraFields}"></textarea>
-                </div>
-                <button type="submit">Save</button>
+                <span class="autosave-status" aria-live="polite"></span>
             </form>
             <form th:action="@{/events/{id}/delete(id=${configuredEvent.id})}" method="post">
                 <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <input type="hidden" name="competitionId" th:value="${competitionId}" />
                 <button class="delete-button" type="submit">Delete Event</button>
             </form>
-            <p>
-                <a class="hub-button" th:href="@{/events/{id}/monitor(id=${configuredEvent.id})}">Event Monitor</a>
-                <a class="hub-button" th:href="@{/events/{id}/live(id=${configuredEvent.id})}">Public Event Page</a>
-            </p>
+            </div>
         </td>
     </tr>
     </tbody>
 </table>
+</div>
+<script>
+    const eventLinkSelect = document.getElementById('eventLinkSelect');
+    const eventMonitorLink = document.getElementById('eventMonitorLink');
+    const publicEventLink = document.getElementById('publicEventLink');
+
+    function updateEventLinks() {
+        if (!eventLinkSelect || !eventMonitorLink || !publicEventLink) {
+            return;
+        }
+        const eventId = eventLinkSelect.value;
+        eventMonitorLink.href = `/events/${eventId}/monitor`;
+        publicEventLink.href = `/events/${eventId}/live`;
+    }
+
+    updateEventLinks();
+    eventLinkSelect?.addEventListener('change', updateEventLinks);
+
+    document.querySelectorAll('.event-autosave-form').forEach((form) => {
+        let timeoutId;
+        const status = form.querySelector('.autosave-status');
+        const fields = document.querySelectorAll(`[form="${form.id}"]`);
+
+        const setStatus = (text, isError = false) => {
+            if (!status) {
+                return;
+            }
+            status.textContent = text;
+            status.style.color = isError ? '#ff9f9f' : '#9fd0ff';
+        };
+
+        const autosave = () => {
+            if (!form.reportValidity()) {
+                setStatus('Required fields missing', true);
+                return;
+            }
+
+            setStatus('Saving...');
+            fetch(form.action, {
+                method: 'POST',
+                body: new FormData(form),
+                credentials: 'same-origin'
+            })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error('Autosave failed');
+                    }
+                    setStatus('Saved');
+                })
+                .catch(() => setStatus('Save failed', true));
+        };
+
+        fields.forEach((field) => {
+            field.addEventListener('input', () => {
+                setStatus('Unsaved');
+                window.clearTimeout(timeoutId);
+                timeoutId = window.setTimeout(autosave, 700);
+            });
+            field.addEventListener('change', () => {
+                window.clearTimeout(timeoutId);
+                autosave();
+            });
+        });
+    });
+</script>
 </body>
 </html>

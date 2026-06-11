@@ -135,6 +135,9 @@
        th:each="event : ${configuredEvents}"
        th:href="@{/events/{id}/live(id=${event.id})}"
        th:text="${event.eventName}">Event</a>
+    <a class="hub-button"
+       th:if="${currentCompetition != null}"
+       th:href="@{/results.csv(competitionId=${competitionId})}">Export CSV</a>
     <form class="delete-all-form" th:if="${canEditCompetitions && currentCompetition != null}"
           th:action="@{/data/delete-all}" method="post"
           onsubmit="return confirm('Delete all athletes, events, scores, and settings for this competition?');">
@@ -158,8 +161,8 @@
             <th rowspan="2">Name</th>
             <th rowspan="2">Body Weight (kg)</th>
             <th rowspan="2">Place</th>
-            <th th:each="event : ${configuredEvents}" colspan="2" th:text="${event.eventName}">Event</th>
             <th rowspan="2">Total Points</th>
+            <th th:each="event : ${configuredEvents}" colspan="2" th:text="${event.eventName}">Event</th>
         </tr>
         <tr>
             <th:block th:each="event : ${configuredEvents}">
@@ -174,11 +177,11 @@
             <td class="competitor-name" th:text="${competitor.name}">Name</td>
             <td th:text="${competitor.bodyWeight}">0.0</td>
             <td th:text="${competitor.place}">1</td>
+            <td th:text="${competitor.totalPoints}">0.0</td>
             <th:block th:each="event : ${configuredEvents}">
                 <td th:text="${competitor.displayResults[event.eventName]}">result</td>
                 <td th:text="${competitor.eventPoints[event.eventName]}">points</td>
             </th:block>
-            <td th:text="${competitor.totalPoints}">0.0</td>
         </tr>
         </tbody>
     </table>
