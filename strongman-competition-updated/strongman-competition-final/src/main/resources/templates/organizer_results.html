@@ -200,18 +200,6 @@
             grid-column: 1 / span 2;
             grid-template-columns: 1fr 1fr;
         }
-        .secondary-time-button {
-            background-color: #4d4d4d;
-            font-size: 0.78rem;
-            grid-column: 1 / span 2;
-            padding: 6px;
-        }
-        .secondary-time-button:hover {
-            background-color: #666;
-        }
-        .secondary-time-button.is-hidden {
-            display: none;
-        }
         .secondary-time-fields {
             display: none;
             gap: 6px;
@@ -387,11 +375,6 @@
                                        th:value="${timeValue != null ? timeValue % 60 : null}"
                                        placeholder="Sec" />
                             </div>
-                            <button type="button"
-                                    class="secondary-time-button"
-                                    th:classappend="${row.results[event.eventName] != null && row.results[event.eventName].secondaryTime != null} ? 'is-hidden' : ''">
-                                Add Secondary Time
-                            </button>
                             <div class="secondary-time-fields"
                                  th:classappend="${row.results[event.eventName] != null && row.results[event.eventName].secondaryTime != null} ? 'has-secondary-time' : ''"
                                  th:with="secondaryTimeValue=${row.results[event.eventName] != null && row.results[event.eventName].secondaryTime != null ? row.results[event.eventName].secondaryTime : null}">
@@ -524,22 +507,6 @@
     }
 
     if (scoreSheetForm) {
-        scoreSheetForm.querySelectorAll('.secondary-time-button').forEach(function (button) {
-            button.addEventListener('click', function () {
-                const eventCell = button.closest('.event-cell');
-                const fields = eventCell ? eventCell.querySelector('.secondary-time-fields') : null;
-                if (!fields) {
-                    return;
-                }
-
-                fields.classList.add('is-visible');
-                button.classList.add('is-hidden');
-                const firstInput = fields.querySelector('input');
-                if (firstInput) {
-                    firstInput.focus();
-                }
-            });
-        });
         scoreSheetForm.addEventListener('input', scheduleAutosave);
         scoreSheetForm.addEventListener('change', scheduleAutosave);
         scoreSheetForm.addEventListener('submit', function (event) {

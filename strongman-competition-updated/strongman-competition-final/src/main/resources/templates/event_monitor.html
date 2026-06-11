@@ -116,22 +116,6 @@
         .secondary-time-fields.is-visible {
             display: grid;
         }
-        .secondary-time-button {
-            background-color: #4d4d4d;
-            border: 0;
-            color: #fff;
-            cursor: pointer;
-            font-size: 0.78rem;
-            font-weight: 700;
-            grid-column: 1 / span 2;
-            padding: 6px;
-        }
-        .secondary-time-button:hover {
-            background-color: #666;
-        }
-        .secondary-time-button.is-hidden {
-            display: none;
-        }
         .score-actions {
             color: #9fb1c3;
             display: block;
@@ -244,11 +228,6 @@
                                    th:value="${row.timeSeconds}"
                                    placeholder="Sec" />
                         </div>
-                        <button type="button"
-                                class="secondary-time-button"
-                                th:classappend="${row.result != null && row.result.secondaryTime != null} ? 'is-hidden' : ''">
-                            Add Secondary Time
-                        </button>
                         <div class="secondary-time-fields"
                              th:classappend="${row.result != null && row.result.secondaryTime != null} ? 'has-secondary-time' : ''">
                             <input type="number" step="1" min="0"
@@ -338,22 +317,6 @@
     }
 
     if (eventScoreForm) {
-        eventScoreForm.querySelectorAll('.secondary-time-button').forEach(function (button) {
-            button.addEventListener('click', function () {
-                const scoreCell = button.closest('.score-cell');
-                const fields = scoreCell ? scoreCell.querySelector('.secondary-time-fields') : null;
-                if (!fields) {
-                    return;
-                }
-
-                fields.classList.add('is-visible');
-                button.classList.add('is-hidden');
-                const firstInput = fields.querySelector('input');
-                if (firstInput) {
-                    firstInput.focus();
-                }
-            });
-        });
         eventScoreForm.addEventListener('input', scheduleEventScoreAutosave);
         eventScoreForm.addEventListener('change', scheduleEventScoreAutosave);
         eventScoreForm.addEventListener('submit', function (event) {
