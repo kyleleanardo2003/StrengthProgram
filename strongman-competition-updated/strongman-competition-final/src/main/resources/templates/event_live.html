@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="refresh" content="10">
-    <title>Live Event</title>
+    <title th:text="${'Event ' + event.sortOrder + ': ' + event.eventName}">Live Event</title>
     <style>
         .live-event-page {
             margin: 0 auto;
@@ -58,10 +58,10 @@
 <body>
 <div th:replace="~{fragments/nav :: appNav}"></div>
 <main class="live-event-page">
-    <h1 class="page-title" th:text="${event.eventName}">Event</h1>
+    <h1 class="page-title" th:text="${'Event ' + event.sortOrder + ': ' + event.eventName}">Event</h1>
     <p class="event-meta" th:if="${currentCompetition != null}" th:text="${currentCompetition.name}">Competition</p>
     <p class="page-actions">
-        <a class="hub-button" th:href="@{/results(competitionId=${competitionId})}">Competition Results</a>
+        <a class="hub-button" th:href="@{/results(competitionId=${competitionId})}">Main Spreadsheet</a>
     </p>
 
     <p th:if="${rowsByGroup == null || rowsByGroup.isEmpty()}">No athletes have been added yet.</p>
@@ -90,7 +90,7 @@
                 <span class="status-pill"
                       th:if="${row.onStage}">On Stage</span>
                 <span class="status-pill is-next"
-                      th:if="${row.nextInHole}">Hole</span>
+                      th:if="${row.nextInHole}">In The Hole</span>
                 <span class="status-pill is-next-to-hole"
                       th:if="${row.nextToHole}">Next In The Hole</span>
             </td>

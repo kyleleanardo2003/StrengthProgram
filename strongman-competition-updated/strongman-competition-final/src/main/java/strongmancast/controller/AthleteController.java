@@ -51,22 +51,31 @@ public class AthleteController {
     }
 
     @PostMapping("/athletes")
-    public String saveAthlete(@RequestParam(required = false) Long competitionId, @ModelAttribute Athlete athlete) {
+    public String saveAthlete(
+            @RequestParam(required = false) Long competitionId,
+            @RequestParam(required = false) String divisionChoice,
+            @RequestParam(required = false) String customDivision,
+            @ModelAttribute Athlete athlete
+    ) {
         Competition competition = competitionContextService.currentCompetition(competitionId);
         athlete.setCompetition(competition);
+        applyDivisionChoice(athlete, divisionChoice, customDivision);
         athleteRepository.save(athlete);
         return "redirect:/athletes?competitionId=" + competition.getId();
     }
 
     @PostMapping("/athletes/{id}")
-    public String updateAthlete(@PathVariable Long id, @ModelAttribute Athlete updatedAthlete) {
+    public String updateAthlete(
+            @PathVariable Long id,
+            @RequestParam(required = false) String divisionChoice,
+            @RequestParam(required = false) String customDivision,
+            @ModelAttribute Athlete updatedAthlete
+    ) {
         Athlete athlete = athleteRepository.findById(id).orElseThrow();
         athlete.setName(updatedAthlete.getName());
         athlete.setMembership(updatedAthlete.getMembership());
-        athlete.setGender(updatedAthlete.getGender());
         athlete.setBodyweight(updatedAthlete.getBodyweight());
-        athlete.setDivision(updatedAthlete.getDivision());
-        athlete.setEventGroup(updatedAthlete.getEventGroup());
+        applyDivisionChoice(athlete, divisionChoice, customDivision);
         athleteRepository.save(athlete);
         Long competitionId = athlete.getCompetition() == null ? null : athlete.getCompetition().getId();
         return "redirect:/organizer" + (competitionId == null ? "" : "?competitionId=" + competitionId);
@@ -88,6 +97,35 @@ public class AthleteController {
         model.addAttribute("athletes", athleteRepository.findByCompetitionOrderByDivisionAscNameAsc(competition));
         competitionContextService.addCompetitionModel(model, competition);
         return "athletes";
+    }
+
+    private void applyDivisionChoice(Athlete athlete, String divisionChoice, String customDivision) {
+        String division = "";
+        if ("OTHER".equals(divisionChoice)) {
+            division = customDivision == null ? "" : customDivision.trim();
+        } else if (divisionChoice != null && !divisionChoice.isBlank() && !"AUTO".equals(divisionChoice)) {
+            division = divisionChoice.trim();
+        }
+
+        athlete.setDivision(division);
+        athlete.setGender(genderForDivision(division));
+        athlete.setEventGroup("");
+    }
+
+    private String genderForDivision(String division) {
+        if (division == null || division.isBlank()) {
+            return "";
+        }
+        if (division.startsWith("Women")) {
+            return "Women";
+        }
+        if (division.startsWith("Men")) {
+            return "Men";
+        }
+        if (division.contains("Adaptive")) {
+            return "Adaptive";
+        }
+        return "";
     }
 }
 

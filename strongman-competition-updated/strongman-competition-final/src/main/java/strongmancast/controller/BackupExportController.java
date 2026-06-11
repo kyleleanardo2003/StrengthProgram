@@ -105,19 +105,16 @@ public class BackupExportController {
     private void writeAthletesSheet(Workbook workbook, CellStyle headerStyle, CellStyle dataStyle, List<Athlete> athletes) {
         Sheet sheet = workbook.createSheet("Athletes");
         writeHeader(sheet.createRow(0), headerStyle,
-                "Name", "Membership", "Class Group", "Body Weight (kg)", "Calculated Division", "Class Override", "Event Group");
+                "Name", "Membership", "Body Weight (kg)", "Category / Class / Group");
         int rowIndex = 1;
         for (Athlete athlete : athletes) {
             writeRow(sheet, dataStyle, rowIndex++,
                     athlete.getName(),
                     athlete.getMembership(),
-                    athlete.getGender(),
                     athlete.getBodyweight(),
-                    weightClassService.resolveDivision(athlete),
-                    athlete.getDivision(),
-                    athlete.getEventGroup());
+                    weightClassService.resolveDivision(athlete));
         }
-        autosize(sheet, 7);
+        autosize(sheet, 4);
     }
 
     private void writeEventsSheet(Workbook workbook, CellStyle headerStyle, CellStyle dataStyle, List<CompetitionEvent> events) {

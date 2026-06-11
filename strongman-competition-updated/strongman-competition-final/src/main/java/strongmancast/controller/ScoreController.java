@@ -177,10 +177,16 @@ public class ScoreController {
             Athlete updatedAthlete = athlete.get();
             updatedAthlete.setName(entry.getValue());
             updatedAthlete.setMembership(params.getOrDefault("membership" + suffix, ""));
-            updatedAthlete.setGender(params.getOrDefault("gender" + suffix, ""));
+            if (params.containsKey("gender" + suffix)) {
+                updatedAthlete.setGender(params.getOrDefault("gender" + suffix, ""));
+            }
             updatedAthlete.setBodyweight(parseDouble(params.get("bodyweight" + suffix)));
-            updatedAthlete.setDivision(params.getOrDefault("division" + suffix, ""));
-            updatedAthlete.setEventGroup(params.getOrDefault("eventGroup" + suffix, ""));
+            if (params.containsKey("division" + suffix)) {
+                updatedAthlete.setDivision(params.getOrDefault("division" + suffix, ""));
+            }
+            if (params.containsKey("eventGroup" + suffix)) {
+                updatedAthlete.setEventGroup(params.getOrDefault("eventGroup" + suffix, ""));
+            }
             athleteRepository.save(updatedAthlete);
         }
     }

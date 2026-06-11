@@ -33,6 +33,12 @@
             color: #66b7ff;
             margin-right: 16px;
         }
+        .custom-division-field {
+            display: none;
+        }
+        .custom-division-field.is-visible {
+            display: block;
+        }
     </style>
     <link rel="stylesheet" th:href="@{/app.css}">
 </head>
@@ -50,24 +56,69 @@
         <label for="membership">Membership:</label>
         <input type="text" id="membership" th:field="*{membership}" />
 
-        <label for="gender">Class Group:</label>
-        <select id="gender" th:field="*{gender}">
-            <option value="">Choose group</option>
-            <option value="Men">Men</option>
-            <option value="Women">Women</option>
-            <option value="Adaptive">Adaptive</option>
-        </select>
-
         <label for="bodyweight">Body Weight (kg):</label>
         <input type="number" step="0.1" id="bodyweight" th:field="*{bodyweight}" required />
 
-        <label for="division">Weight Class Override (optional):</label>
-        <input type="text" id="division" th:field="*{division}" placeholder="Leave blank to auto-calculate, or enter Adaptive/Masters/custom class" />
+        <label for="divisionChoice">Category / Class / Group:</label>
+        <select id="divisionChoice" name="divisionChoice">
+            <option value="AUTO" th:selected="${athlete.division == null || athlete.division.isBlank()}">Auto by bodyweight</option>
+            <option value="Men Lightweight (LW)" th:selected="${athlete.division == 'Men Lightweight (LW)'}">Men Lightweight (LW): under 80 kg / 175 lb</option>
+            <option value="Men Middleweight (MW)" th:selected="${athlete.division == 'Men Middleweight (MW)'}">Men Middleweight (MW): under 90 kg / 200 lb</option>
+            <option value="Men Heavyweight (HW)" th:selected="${athlete.division == 'Men Heavyweight (HW)'}">Men Heavyweight (HW): under 105 kg / 231 lb</option>
+            <option value="Men Super Heavyweight (SHW)" th:selected="${athlete.division == 'Men Super Heavyweight (SHW)'}">Men Super Heavyweight (SHW): open</option>
+            <option value="Women Lightweight (LW)" th:selected="${athlete.division == 'Women Lightweight (LW)'}">Women Lightweight (LW): under 64 kg / 140 lb</option>
+            <option value="Women Middleweight (MW)" th:selected="${athlete.division == 'Women Middleweight (MW)'}">Women Middleweight (MW): under 73 kg / 160 lb</option>
+            <option value="Women Heavyweight (HW)" th:selected="${athlete.division == 'Women Heavyweight (HW)'}">Women Heavyweight (HW): under 82 kg / 180 lb</option>
+            <option value="Women Super Heavyweight (SHW)" th:selected="${athlete.division == 'Women Super Heavyweight (SHW)'}">Women Super Heavyweight (SHW): open</option>
+            <option value="Adaptive" th:selected="${athlete.division == 'Adaptive'}">Adaptive</option>
+            <option value="OTHER"
+                    th:selected="${athlete.division != null && !athlete.division.isBlank()
+                        && athlete.division != 'Men Lightweight (LW)'
+                        && athlete.division != 'Men Middleweight (MW)'
+                        && athlete.division != 'Men Heavyweight (HW)'
+                        && athlete.division != 'Men Super Heavyweight (SHW)'
+                        && athlete.division != 'Women Lightweight (LW)'
+                        && athlete.division != 'Women Middleweight (MW)'
+                        && athlete.division != 'Women Heavyweight (HW)'
+                        && athlete.division != 'Women Super Heavyweight (SHW)'
+                        && athlete.division != 'Adaptive'}">Other</option>
+        </select>
 
-        <label for="eventGroup">Event Group (optional):</label>
-        <input type="text" id="eventGroup" th:field="*{eventGroup}" placeholder="Optional: Group A, Novice Women, Lane 1, etc." />
+        <div id="customDivisionField" class="custom-division-field">
+            <label for="customDivision">Custom Category / Class / Group:</label>
+            <input type="text" id="customDivision" name="customDivision"
+                   th:value="${athlete.division != null
+                        && !athlete.division.isBlank()
+                        && athlete.division != 'Men Lightweight (LW)'
+                        && athlete.division != 'Men Middleweight (MW)'
+                        && athlete.division != 'Men Heavyweight (HW)'
+                        && athlete.division != 'Men Super Heavyweight (SHW)'
+                        && athlete.division != 'Women Lightweight (LW)'
+                        && athlete.division != 'Women Middleweight (MW)'
+                        && athlete.division != 'Women Heavyweight (HW)'
+                        && athlete.division != 'Women Super Heavyweight (SHW)'
+                        && athlete.division != 'Adaptive' ? athlete.division : ''}"
+                   placeholder="Novice, Masters, Teen, custom class, etc." />
+        </div>
 
         <button type="submit">Save Athlete</button>
     </form>
+    <script>
+        const divisionChoice = document.getElementById('divisionChoice');
+        const customDivisionField = document.getElementById('customDivisionField');
+
+        function updateCustomDivisionVisibility() {
+            if (!divisionChoice || !customDivisionField) {
+                return;
+            }
+
+            customDivisionField.classList.toggle('is-visible', divisionChoice.value === 'OTHER');
+        }
+
+        if (divisionChoice) {
+            divisionChoice.addEventListener('change', updateCustomDivisionVisibility);
+            updateCustomDivisionVisibility();
+        }
+    </script>
 </body>
 </html>

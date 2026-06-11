@@ -47,6 +47,73 @@
         .event-button-row a {
             margin-right: 0;
         }
+        .delete-all-form {
+            display: inline;
+            margin: 0;
+        }
+        .delete-all-button {
+            background-color: #a83232;
+            border: 0;
+            border-radius: 3px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 7px 9px;
+        }
+        .delete-all-button:hover {
+            background-color: #7f2424;
+        }
+        .highlight-legend {
+            align-items: center;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 4px 0 20px;
+        }
+        .highlight-key {
+            align-items: center;
+            display: inline-flex;
+            font-size: 0.9rem;
+            font-weight: 700;
+            gap: 6px;
+        }
+        .highlight-swatch {
+            border: 1px solid #777;
+            display: inline-block;
+            height: 14px;
+            width: 28px;
+        }
+        .highlight-swatch.is-active {
+            background: #153a24;
+            border-color: #55d187;
+        }
+        .highlight-swatch.is-next {
+            background: #3a3215;
+            border-color: #d1b255;
+        }
+        .highlight-swatch.is-next-to-hole {
+            background: #223347;
+            border-color: #69b7ff;
+        }
+        .competitor-name {
+            color: #fff;
+            font-weight: 900;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+        tr.is-active {
+            background: #153a24;
+            outline: 2px solid #55d187;
+        }
+        tr.is-next {
+            background: #3a3215;
+            outline: 2px solid #d1b255;
+        }
+        tr.is-next-to-hole {
+            background: #223347;
+            outline: 2px solid #69b7ff;
+        }
     </style>
     <link rel="stylesheet" th:href="@{/app.css}">
 </head>
@@ -68,6 +135,19 @@
        th:each="event : ${configuredEvents}"
        th:href="@{/events/{id}/live(id=${event.id})}"
        th:text="${event.eventName}">Event</a>
+    <form class="delete-all-form" th:if="${canEditCompetitions && currentCompetition != null}"
+          th:action="@{/data/delete-all}" method="post"
+          onsubmit="return confirm('Delete all athletes, events, scores, and settings for this competition?');">
+        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+        <input type="hidden" name="competitionId" th:value="${competitionId}" />
+        <button class="delete-all-button" type="submit">Delete All Info</button>
+    </form>
+</div>
+
+<div class="highlight-legend" th:if="${divisions != null && !divisions.isEmpty()}">
+    <span class="highlight-key"><span class="highlight-swatch is-active"></span>On stage</span>
+    <span class="highlight-key"><span class="highlight-swatch is-next"></span>In the hole</span>
+    <span class="highlight-key"><span class="highlight-swatch is-next-to-hole"></span>Next in the hole</span>
 </div>
 
 <div th:each="division : ${divisions}">
@@ -89,8 +169,9 @@
         </tr>
         </thead>
         <tbody>
-        <tr th:each="competitor : ${division.value}">
-            <td th:text="${competitor.name}">Name</td>
+        <tr th:each="competitor : ${division.value}"
+            th:classappend="${competitor.onStage} ? 'is-active' : (${competitor.nextInHole} ? 'is-next' : (${competitor.nextToHole} ? 'is-next-to-hole' : ''))">
+            <td class="competitor-name" th:text="${competitor.name}">Name</td>
             <td th:text="${competitor.bodyWeight}">0.0</td>
             <td th:text="${competitor.place}">1</td>
             <th:block th:each="event : ${configuredEvents}">

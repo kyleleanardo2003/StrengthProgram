@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Event Monitor</title>
+    <title th:text="${'Event ' + event.sortOrder + ': ' + event.eventName}">Event Monitor</title>
     <style>
         .monitor-page {
             margin: 0 auto;
@@ -37,6 +37,19 @@
             color: #fff;
             cursor: pointer;
             font-weight: 700;
+        }
+        .inline-action-form {
+            display: inline;
+            margin: 0;
+        }
+        .danger-button {
+            background: #a83232;
+            border: 0;
+            color: #fff;
+            cursor: pointer;
+        }
+        .danger-button:hover {
+            background: #7f2424;
         }
         table {
             border-collapse: collapse;
@@ -145,13 +158,20 @@
 <body>
 <div th:replace="~{fragments/nav :: appNav}"></div>
 <main class="monitor-page">
-    <h1 class="page-title" th:text="${event.eventName + ' Monitor'}">Event Monitor</h1>
+    <h1 class="page-title" th:text="${'Event ' + event.sortOrder + ': ' + event.eventName}">Event Monitor</h1>
     <p th:if="${currentCompetition != null}" th:text="${currentCompetition.name}">Competition</p>
-    <p class="page-actions">
+    <div class="page-actions">
+        <a class="hub-button" th:href="@{/organizer(competitionId=${competitionId})}">Main Spreadsheet</a>
         <a class="hub-button" th:href="@{/events(competitionId=${competitionId})}">Back to Events</a>
         <a class="hub-button" th:href="@{/events/{id}/live(id=${event.id})}">Public Event Page</a>
-        <a class="hub-button" th:href="@{/organizer(competitionId=${competitionId})}">Organizer Results</a>
-    </p>
+        <form class="inline-action-form"
+              th:action="@{/data/delete-event-results}" method="post"
+              onsubmit="return confirm('Clear all scores for this event only?');">
+            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+            <input type="hidden" name="eventId" th:value="${event.id}" />
+            <button class="hub-button danger-button" type="submit">Clear This Event Scores</button>
+        </form>
+    </div>
 
     <section class="monitor-panel">
         <h2>Turn Order Highlight</h2>
@@ -248,7 +268,7 @@
                 <td th:text="${row.overallPlace}">Overall</td>
                 <td>
                     <span class="status-on-stage" th:if="${row.onStage}">On Stage</span>
-                    <span class="status-next" th:if="${row.nextInHole}">Hole</span>
+                    <span class="status-next" th:if="${row.nextInHole}">In The Hole</span>
                     <span class="status-next-to-hole" th:if="${row.nextToHole}">Next In The Hole</span>
                 </td>
             </tr>

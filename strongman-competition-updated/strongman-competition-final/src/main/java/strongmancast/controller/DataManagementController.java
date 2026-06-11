@@ -55,6 +55,15 @@ public class DataManagementController {
         return "redirect:/organizer?competitionId=" + competition.getId();
     }
 
+    @PostMapping("/data/delete-event-results")
+    @Transactional
+    public String deleteEventResults(@RequestParam Long eventId) {
+        CompetitionEvent event = competitionEventRepository.findById(eventId).orElseThrow();
+        Competition competition = event.getCompetition();
+        eventResultRepository.deleteByCompetitionAndEventName(competition, event.getEventName());
+        return "redirect:/events/" + event.getId() + "/monitor";
+    }
+
     @PostMapping("/data/delete-competitors")
     @Transactional
     public String deleteCompetitors(@RequestParam(required = false) Long competitionId) {

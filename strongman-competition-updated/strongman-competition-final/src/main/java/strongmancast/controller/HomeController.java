@@ -2,6 +2,7 @@ package strongmancast.controller;
 
 import strongmancast.model.Athlete;
 import strongmancast.model.Competition;
+import strongmancast.model.CompetitionEvent;
 import strongmancast.model.Competitor;
 import strongmancast.model.EventConfig;
 import strongmancast.model.EventResult;
@@ -106,6 +107,7 @@ public class HomeController {
         }
 
         calculateScores(competition, competitorsByDivision);
+        applyCurrentEventTurnStatuses(competition, competitorsByDivision);
         return competitorsByDivision;
     }
 
@@ -124,28 +126,31 @@ public class HomeController {
 
     private Map<String, List<OrganizerScoreRow>> buildScoreRowsByDivision(Competition competition, Map<String, List<Competitor>> competitorsByDivision) {
         Map<String, List<OrganizerScoreRow>> rowsByDivision = new LinkedHashMap<>();
-        Map<String, List<Competitor>> competitorsByKey = new HashMap<>();
-        for (List<Competitor> divisionCompetitors : competitorsByDivision.values()) {
-            for (Competitor competitor : divisionCompetitors) {
-                competitorsByKey
-                        .computeIfAbsent(competitor.getName() + "|" + competitor.getWeightClass(), key -> new ArrayList<>())
-                        .add(competitor);
-            }
+        Map<String, List<Athlete>> athletesByKey = new HashMap<>();
+        for (Athlete athlete : athleteRepository.findByCompetitionOrderByDivisionAscNameAsc(competition)) {
+            athletesByKey
+                    .computeIfAbsent(athlete.getName() + "|" + displayDivision(athlete), key -> new ArrayList<>())
+                    .add(athlete);
         }
 
-        for (Athlete athlete : athleteRepository.findByCompetitionOrderByDivisionAscNameAsc(competition)) {
-            OrganizerScoreRow row = new OrganizerScoreRow(athlete);
-            String division = displayDivision(athlete);
-            List<Competitor> matchingCompetitors = competitorsByKey.get(athlete.getName() + "|" + division);
-            if (matchingCompetitors != null && !matchingCompetitors.isEmpty()) {
-                row.setCompetitor(matchingCompetitors.remove(0));
-            }
+        for (Map.Entry<String, List<Competitor>> divisionEntry : competitorsByDivision.entrySet()) {
+            for (Competitor competitor : divisionEntry.getValue()) {
+                List<Athlete> matchingAthletes = athletesByKey.get(competitor.getName() + "|" + competitor.getWeightClass());
+                if (matchingAthletes == null || matchingAthletes.isEmpty()) {
+                    continue;
+                }
 
-            for (EventResult result : eventResultRepository.findByAthleteAndCompetition(athlete, competition)) {
-                row.getResults().put(result.getEventName(), result);
-            }
+                Athlete athlete = matchingAthletes.remove(0);
+                OrganizerScoreRow row = new OrganizerScoreRow(athlete);
+                row.setCompetitor(competitor);
+                row.setTurnStatus(competitor.getTurnStatus());
 
-            rowsByDivision.computeIfAbsent(division, key -> new ArrayList<>()).add(row);
+                for (EventResult result : eventResultRepository.findByAthleteAndCompetition(athlete, competition)) {
+                    row.getResults().put(result.getEventName(), result);
+                }
+
+                rowsByDivision.computeIfAbsent(divisionEntry.getKey(), key -> new ArrayList<>()).add(row);
+            }
         }
 
         return rowsByDivision;
@@ -156,6 +161,7 @@ public class HomeController {
 
         for (Athlete athlete : athleteRepository.findByCompetitionOrderByDivisionAscNameAsc(competition)) {
             Competitor competitor = new Competitor();
+            competitor.setAthleteId(athlete.getId());
             competitor.setName(athlete.getName());
             competitor.setMembership(athlete.getMembership());
             competitor.setBodyWeight(athlete.getBodyweight());
@@ -181,6 +187,106 @@ public class HomeController {
         }
 
         return competitors;
+    }
+
+    private void applyCurrentEventTurnStatuses(Competition competition, Map<String, List<Competitor>> competitorsByDivision) {
+        List<CompetitionEvent> events = competitionEventRepository.findByCompetitionOrderBySortOrderAscIdAsc(competition);
+        if (events.isEmpty()) {
+            return;
+        }
+
+        List<Competitor> competitors = competitorsByDivision.values().stream()
+                .flatMap(List::stream)
+                .toList();
+        Map<Long, Competitor> competitorsByAthleteId = competitors.stream()
+                .filter(competitor -> competitor.getAthleteId() != null)
+                .collect(java.util.stream.Collectors.toMap(Competitor::getAthleteId, competitor -> competitor, (first, second) -> first));
+        Map<String, EventResult> resultsByAthleteAndEvent = eventResultRepository.findByCompetition(competition).stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        result -> result.getAthlete().getId() + "|" + result.getEventName(),
+                        result -> result,
+                        (first, second) -> first));
+
+        CompetitionEvent currentEvent = currentEvent(events, competitors, resultsByAthleteAndEvent);
+        if (currentEvent == null) {
+            return;
+        }
+
+        List<Competitor> runOrder = runOrderForCurrentEvent(events, currentEvent, competitorsByDivision);
+        int activeSlots = Integer.valueOf(2).equals(currentEvent.getActiveSlots()) ? 2 : 1;
+        int activeCount = 0;
+        int holeCount = 0;
+        int nextHoleCount = 0;
+
+        for (Competitor competitor : runOrder) {
+            EventResult result = resultsByAthleteAndEvent.get(competitor.getAthleteId() + "|" + currentEvent.getEventName());
+            if (result != null && hasScore(result)) {
+                continue;
+            }
+
+            Competitor highlightedCompetitor = competitorsByAthleteId.get(competitor.getAthleteId());
+            if (highlightedCompetitor == null) {
+                continue;
+            }
+
+            if (activeCount < activeSlots) {
+                highlightedCompetitor.setTurnStatus("ON_STAGE");
+                activeCount++;
+            } else if (holeCount < activeSlots) {
+                highlightedCompetitor.setTurnStatus("NEXT_IN_HOLE");
+                holeCount++;
+            } else if (nextHoleCount < activeSlots) {
+                highlightedCompetitor.setTurnStatus("NEXT_TO_HOLE");
+                nextHoleCount++;
+            } else {
+                break;
+            }
+        }
+    }
+
+    private CompetitionEvent currentEvent(
+            List<CompetitionEvent> events,
+            List<Competitor> competitors,
+            Map<String, EventResult> resultsByAthleteAndEvent
+    ) {
+        for (CompetitionEvent event : events) {
+            boolean hasUnscoredCompetitor = competitors.stream().anyMatch(competitor -> {
+                EventResult result = resultsByAthleteAndEvent.get(competitor.getAthleteId() + "|" + event.getEventName());
+                return result == null || !hasScore(result);
+            });
+            if (hasUnscoredCompetitor) {
+                return event;
+            }
+        }
+        return null;
+    }
+
+    private List<Competitor> runOrderForCurrentEvent(
+            List<CompetitionEvent> events,
+            CompetitionEvent currentEvent,
+            Map<String, List<Competitor>> competitorsByDivision
+    ) {
+        List<Competitor> runOrder = new ArrayList<>();
+        int currentIndex = events.indexOf(currentEvent);
+        String previousEventName = currentIndex > 0 ? events.get(currentIndex - 1).getEventName() : null;
+
+        for (List<Competitor> divisionCompetitors : competitorsByDivision.values()) {
+            List<Competitor> orderedDivision = new ArrayList<>(divisionCompetitors);
+            if (previousEventName != null) {
+                orderedDivision.sort(Comparator
+                        .comparing((Competitor competitor) -> competitor.getEventPlacements().getOrDefault(previousEventName, Integer.MAX_VALUE))
+                        .thenComparing(Competitor::getName, Comparator.nullsLast(String::compareToIgnoreCase)));
+            } else {
+                orderedDivision.sort(Comparator.comparing(Competitor::getName, Comparator.nullsLast(String::compareToIgnoreCase)));
+            }
+            runOrder.addAll(orderedDivision);
+        }
+
+        return runOrder;
+    }
+
+    private boolean hasScore(EventResult result) {
+        return result.getResult() != null || result.getTime() != null || result.getSecondaryTime() != null;
     }
 
     private void appendDisplayResult(Competitor competitor, String eventName, String displayValue) {

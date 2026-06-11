@@ -78,6 +78,23 @@
         .delete-button {
             background-color: #b91c1c;
         }
+        .import-note {
+            color: #c8d2dc;
+            font-size: 0.86rem;
+            grid-column: 1 / -1;
+            margin: 0;
+            text-align: center;
+        }
+        .flash-message {
+            color: #78d381;
+            font-weight: 800;
+            margin: 8px 0 0;
+        }
+        .flash-error {
+            color: #ff7b7b;
+            font-weight: 800;
+            margin: 8px 0 0;
+        }
     </style>
     <link rel="stylesheet" th:href="@{/app.css}">
 </head>
@@ -86,13 +103,15 @@
 
 <main class="hub-page">
     <section class="hub-actions" th:if="${canEditCompetitions}">
+        <p class="flash-message" th:if="${importMessage}" th:text="${importMessage}">Imported athletes.</p>
+        <p class="flash-error" th:if="${importError}" th:text="${importError}">Import error.</p>
         <details class="inline-create-form">
             <summary class="hub-button">Create New Competition</summary>
             <form class="form-grid" th:action="@{/competitions}" th:object="${competition}" method="post">
                 <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <div class="field">
                     <label for="name">Name</label>
-                    <input id="name" type="text" th:field="*{name}" required />
+                    <input id="name" type="text" th:field="*{name}" placeholder="Competition # auto if blank" />
                 </div>
                 <div class="field">
                     <label for="competitionDate">Date</label>
@@ -113,7 +132,38 @@
                 <button type="submit">Create</button>
             </form>
         </details>
-        <span class="hub-button">Upload Competition From Data File</span>
+        <details class="inline-create-form">
+            <summary class="hub-button">Import From File</summary>
+            <form class="form-grid" th:action="@{/competitions/import}" method="post" enctype="multipart/form-data">
+                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <p class="import-note">Use Excel files or Google Sheets exported as .xlsx, .csv, or .tsv. Include athlete names and body weight.</p>
+                <div class="field">
+                    <label for="importName">Competition Name</label>
+                    <input id="importName" type="text" name="name" placeholder="Competition # auto if blank" />
+                </div>
+                <div class="field">
+                    <label for="importCompetitionDate">Date</label>
+                    <input id="importCompetitionDate" type="date" name="competitionDate" />
+                </div>
+                <div class="field">
+                    <label for="importLocation">Location</label>
+                    <input id="importLocation" type="text" name="location" />
+                </div>
+                <div class="field">
+                    <label for="importStatus">Status</label>
+                    <select id="importStatus" name="status">
+                        <option value="SETUP">Setup</option>
+                        <option value="LIVE">Live</option>
+                        <option value="COMPLETE">Complete</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="dataFile">File</label>
+                    <input id="dataFile" type="file" name="dataFile" accept=".xlsx,.xls,.csv,.tsv" required />
+                </div>
+                <button type="submit">Import</button>
+            </form>
+        </details>
     </section>
 
     <section id="live-competitions" class="competition-table">

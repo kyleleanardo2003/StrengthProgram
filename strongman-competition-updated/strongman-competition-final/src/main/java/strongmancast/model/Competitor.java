@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Competitor {
+    private Long athleteId;
     private String name;
     private String membership;
     private String gender;
@@ -11,6 +12,7 @@ public class Competitor {
     private int place;
     private double bodyWeight;
     private double totalPoints;
+    private String turnStatus = "";
 
     private Map<String, Double> scores = new HashMap<>();
     private Map<String, Double> eventPoints = new HashMap<>();
@@ -19,6 +21,14 @@ public class Competitor {
     private Map<String, String> displayResults = new HashMap<>();
 
     // Getters and setters
+
+    public Long getAthleteId() {
+        return athleteId;
+    }
+
+    public void setAthleteId(Long athleteId) {
+        this.athleteId = athleteId;
+    }
 
     public String getName() {
         return name;
@@ -74,6 +84,26 @@ public class Competitor {
 
     public void setTotalPoints(double totalPoints) {
         this.totalPoints = totalPoints;
+    }
+
+    public String getTurnStatus() {
+        return turnStatus;
+    }
+
+    public void setTurnStatus(String turnStatus) {
+        this.turnStatus = turnStatus;
+    }
+
+    public boolean isOnStage() {
+        return "ON_STAGE".equals(turnStatus);
+    }
+
+    public boolean isNextInHole() {
+        return "NEXT_IN_HOLE".equals(turnStatus);
+    }
+
+    public boolean isNextToHole() {
+        return "NEXT_TO_HOLE".equals(turnStatus);
     }
 
     public Map<String, Double> getScores() {

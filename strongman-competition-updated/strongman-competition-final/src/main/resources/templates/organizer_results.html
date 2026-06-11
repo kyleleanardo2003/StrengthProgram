@@ -138,20 +138,6 @@
         .title-save-status.is-error {
             color: #ff7b7b;
         }
-        .danger-zone {
-            border: 1px solid #8a2d2d;
-            margin: 20px 0;
-            padding: 14px;
-        }
-        .danger-zone h2 {
-            margin-top: 0;
-        }
-        .danger-zone button {
-            background-color: #a83232;
-        }
-        .danger-zone button:hover {
-            background-color: #7f2424;
-        }
         .sheet-wrap {
             border: 1px solid #3b4652;
             margin-bottom: 28px;
@@ -195,12 +181,6 @@
         .medium-col {
             min-width: 132px;
             width: 132px;
-        }
-        .event-group-column {
-            display: none;
-        }
-        body.show-event-groups .event-group-column {
-            display: table-cell;
         }
         .event-col {
             min-width: 210px;
@@ -256,6 +236,21 @@
             color: #b9c4cf;
             margin: 24px 0;
         }
+        tr.is-active {
+            background: #153a24;
+            outline: 2px solid #55d187;
+        }
+        tr.is-next {
+            background: #3a3215;
+            outline: 2px solid #d1b255;
+        }
+        tr.is-next-to-hole {
+            background: #223347;
+            outline: 2px solid #69b7ff;
+        }
+        .athlete-col input {
+            font-weight: 800;
+        }
     </style>
     <link rel="stylesheet" th:href="@{/app.css}">
 </head>
@@ -295,15 +290,6 @@
     <button type="submit">Mark Complete / Archive</button>
 </form>
 
-<section class="danger-zone">
-    <h2>Organizer Data Control</h2>
-    <form th:action="@{/data/delete-all}" method="post">
-        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-        <input type="hidden" name="competitionId" th:value="${competitionId}" />
-        <button type="submit">Delete All Info</button>
-    </form>
-</section>
-
 <p th:if="${error}" th:text="${error}">Error</p>
 <p class="empty-state" th:if="${divisions == null || divisions.isEmpty()}">No athletes have been added yet.</p>
 <p class="empty-state" th:if="${configuredEvents == null || configuredEvents.isEmpty()}">No events have been configured yet.</p>
@@ -331,10 +317,9 @@
     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
     <input type="hidden" name="competitionId" th:value="${competitionId}" />
     <input type="hidden" id="autosave-url" th:value="@{/scores/bulk/autosave}" />
-    <div class="toolbar">
-        <span>Edit the sheet values. Changes save automatically.</span>
-        <div class="toolbar-actions">
-            <button id="event-group-toggle" class="secondary-button" type="button" aria-pressed="false">Show Event Groups</button>
+        <div class="toolbar">
+            <span>Edit the sheet values. Changes save automatically.</span>
+            <div class="toolbar-actions">
             <span id="autosave-status" class="autosave-status" aria-live="polite">All changes saved</span>
         </div>
     </div>
@@ -348,16 +333,14 @@
                     <th class="small-col">Place</th>
                     <th class="athlete-col">Athlete</th>
                     <th class="medium-col">Membership</th>
-                    <th class="medium-col">Class Group</th>
                     <th class="small-col">Body Wt (kg)</th>
-                    <th class="medium-col">Class Override</th>
-                    <th class="medium-col event-group-column">Event Group</th>
                     <th class="event-col" th:each="event : ${configuredEvents}" th:text="${event.eventName}">Event</th>
                     <th class="small-col">Total</th>
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:each="row : ${divisionRows.value}">
+                <tr th:each="row : ${divisionRows.value}"
+                    th:classappend="${row.onStage} ? 'is-active' : (${row.nextInHole} ? 'is-next' : (${row.nextToHole} ? 'is-next-to-hole' : ''))">
                     <td class="small-col">
                         <div class="readonly" th:text="${row.competitor != null ? row.competitor.place : ''}">1</div>
                     </td>
@@ -371,29 +354,10 @@
                                th:name="|membership__${row.athlete.id}|"
                                th:value="${row.athlete.membership}" />
                     </td>
-                    <td class="medium-col">
-                        <select th:name="|gender__${row.athlete.id}|">
-                            <option value="" th:selected="${row.athlete.gender == null || row.athlete.gender.isBlank()}">Choose</option>
-                            <option value="Men" th:selected="${row.athlete.gender == 'Men'}">Men</option>
-                            <option value="Women" th:selected="${row.athlete.gender == 'Women'}">Women</option>
-                            <option value="Adaptive" th:selected="${row.athlete.gender == 'Adaptive'}">Adaptive</option>
-                        </select>
-                    </td>
                     <td class="small-col">
                         <input type="number" step="0.1"
                                th:name="|bodyweight__${row.athlete.id}|"
                                th:value="${row.athlete.bodyweight}" required />
-                    </td>
-                    <td class="medium-col">
-                        <input type="text"
-                               th:name="|division__${row.athlete.id}|"
-                               th:value="${row.athlete.division}"
-                               placeholder="Auto if blank" />
-                    </td>
-                    <td class="medium-col event-group-column">
-                        <input type="text"
-                               th:name="|eventGroup__${row.athlete.id}|"
-                               th:value="${row.athlete.eventGroup}" />
                     </td>
                     <td class="event-col" th:each="event : ${configuredEvents}">
                         <div class="event-cell">
@@ -507,7 +471,6 @@
     const scoreSheetForm = document.getElementById('score-sheet-form');
     const autosaveStatus = document.getElementById('autosave-status');
     const autosaveUrl = document.getElementById('autosave-url');
-    const eventGroupToggle = document.getElementById('event-group-toggle');
     let autosaveTimer;
     let autosaveController;
 
@@ -585,13 +548,6 @@
         });
     }
 
-    if (eventGroupToggle) {
-        eventGroupToggle.addEventListener('click', function () {
-            const isShowing = document.body.classList.toggle('show-event-groups');
-            eventGroupToggle.textContent = isShowing ? 'Hide Event Groups' : 'Show Event Groups';
-            eventGroupToggle.setAttribute('aria-pressed', String(isShowing));
-        });
-    }
 </script>
 </body>
 </html>
